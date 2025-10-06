@@ -14,14 +14,21 @@ exports.getMatchesByTournament = async (req, res) => {
     if (round) query.round = round;
     if (group) query.group = group;
 
+    console.log("Fetching matches with query:", query);
+
     const matches = await db
       .collection("matches")
       .find(query)
       .sort({ matchNumber: 1 })
       .toArray();
 
+    console.log(
+      `Found ${matches.length} matches for tournament ${tournamentId}`
+    );
+
     res.json({ success: true, data: matches });
   } catch (error) {
+    console.error("Error in getMatchesByTournament:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -347,8 +354,16 @@ exports.generateSchedule = async (req, res) => {
       });
     }
 
+    console.log("Tournament format:", tournament.format);
+
     // Get all teams
     const teams = await db.collection("teams").find({ tournamentId }).toArray();
+
+    console.log("Teams found:", teams.length);
+    console.log(
+      "Team details:",
+      teams.map((t) => ({ name: t.name, group: t.group }))
+    );
 
     if (teams.length < 2) {
       return res.status(400).json({
@@ -365,6 +380,8 @@ exports.generateSchedule = async (req, res) => {
 
     // Generate matches based on format
     if (tournament.format === "round-robin") {
+      console.log("Generating round-robin matches...");
+
       // Round robin: every team plays every other team
       for (let i = 0; i < teams.length; i++) {
         for (let j = i + 1; j < teams.length; j++) {
@@ -389,6 +406,8 @@ exports.generateSchedule = async (req, res) => {
       tournament.format === "groups" ||
       tournament.format === "groups-super4"
     ) {
+      console.log("Generating group stage matches...");
+
       // Group stage matches
       const groups = {};
       teams.forEach((team) => {
@@ -397,6 +416,12 @@ exports.generateSchedule = async (req, res) => {
         }
         groups[team.group].push(team);
       });
+
+      console.log("Groups:", Object.keys(groups));
+      console.log(
+        "Teams per group:",
+        Object.keys(groups).map((g) => ({ group: g, count: groups[g].length }))
+      );
 
       // Generate matches within each group
       Object.keys(groups).forEach((groupName) => {
@@ -423,6 +448,8 @@ exports.generateSchedule = async (req, res) => {
       });
     }
 
+    console.log(`Total matches to insert: ${matches.length}`);
+
     // Insert all matches
     if (matches.length > 0) {
       await db.collection("matches").insertMany(matches);
@@ -434,6 +461,7 @@ exports.generateSchedule = async (req, res) => {
       data: { matchCount: matches.length },
     });
   } catch (error) {
+    console.error("Error in generateSchedule:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

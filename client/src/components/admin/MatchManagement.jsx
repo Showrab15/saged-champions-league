@@ -21,19 +21,13 @@ const MatchManagement = ({ tournament }) => {
 
   const fetchMatches = async () => {
     try {
+      console.log("Fetching matches for tournament:", tournament._id);
       const response = await matchAPI.getByTournament(tournament._id);
-      setMatches(response.data.data);
+      console.log("API Response:", response);
+      console.log("Matches data:", response.data.data);
+      setMatches(response.data.data || []);
     } catch (error) {
       console.error("Error fetching matches:", error);
-    }
-  };
-
-  const fetchTeams = async () => {
-    try {
-      const response = await teamAPI.getByTournament(tournament._id);
-      setTeams(response.data.data);
-    } catch (error) {
-      console.error("Error fetching teams:", error);
     }
   };
 
@@ -46,13 +40,28 @@ const MatchManagement = ({ tournament }) => {
     setMessage("");
 
     try {
-      await matchAPI.generateSchedule(tournament._id);
+      const result = await matchAPI.generateSchedule(tournament._id);
+      console.log("Generate schedule result:", result);
       setMessage("Schedule generated successfully!");
-      fetchMatches();
+
+      // Add a small delay to ensure DB writes complete
+      setTimeout(() => {
+        fetchMatches();
+      }, 500);
     } catch (error) {
+      console.error("Generate schedule error:", error);
       setMessage(error.response?.data?.message || "Error generating schedule");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeams = async () => {
+    try {
+      const response = await teamAPI.getByTournament(tournament._id);
+      setTeams(response.data.data);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
     }
   };
 

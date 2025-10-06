@@ -3,6 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Header from "./components/shared/Header.jsx";
+import PreviousTournamentsPage from "./components/user/PreviousTournamentsPage.jsx";
 import { auth } from "./firebase/config";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
@@ -34,6 +35,8 @@ function App() {
       <Header user={user} />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/previous" element={<PreviousTournamentsPage />} />
+
         <Route
           path="/admin"
           element={user ? <AdminPage /> : <Navigate to="/login" />}

@@ -1,12 +1,13 @@
-// server/routes/tournament.routes.js
 const express = require("express");
 const router = express.Router();
 const tournamentController = require("../controllers/tournament.controller");
 
+console.log("🔷 Tournament routes loaded");
+
 // Get all tournaments
 router.get("/", tournamentController.getAllTournaments);
 
-// Get active tournament
+// Get active tournament - THIS MUST BE BEFORE /:id
 router.get("/active", tournamentController.getActiveTournament);
 
 // Get tournament by ID

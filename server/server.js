@@ -1,4 +1,3 @@
-// server/server.js
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -28,15 +27,25 @@ const adminRoutes = require("./routes/admin.routes");
 const connectDB = require("./config/db");
 connectDB();
 
+console.log("🚀 Mounting routes...");
+
 // Routes
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/admin", adminRoutes);
 
+console.log("✅ Routes mounted");
+
 // Health check
 app.get("/", (req, res) => {
   res.json({ message: "SAGED Champions League API is running" });
+});
+
+// 404 handler - add this to debug
+app.use((req, res, next) => {
+  console.log(`❌ 404: ${req.method} ${req.url}`);
+  res.status(404).json({ message: `Route ${req.url} not found` });
 });
 
 // Error handling middleware
@@ -49,5 +58,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-  console.log(`SAGED Champions League API running on port ${port}`);
+  console.log(`🎯 SAGED Champions League API running on port ${port}`);
 });

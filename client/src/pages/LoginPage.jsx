@@ -1,26 +1,24 @@
 /* eslint-disable no-unused-vars */
-// client/src/pages/LoginPage.jsx
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/config";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
     setError("");
     setLoading(true);
 
+    const provider = new GoogleAuthProvider();
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/admin");
+      await signInWithPopup(auth, provider);
+      navigate("/admin"); // redirect to admin after successful login
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,37 +43,20 @@ const LoginPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-gray-400 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-400 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
-          </div>
-
+        <div className="flex flex-col items-center space-y-4">
           <button
-            type="submit"
+            onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all duration-300 disabled:opacity-50"
+            className="w-full bg-white text-gray-800 font-semibold py-3 rounded-lg flex items-center justify-center gap-3 shadow-md hover:bg-gray-100 transition-all duration-300 disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google Logo"
+              className="w-5 h-5"
+            />
+            {loading ? "Signing in..." : "Sign in with Google"}
           </button>
-        </form>
+        </div>
       </motion.div>
     </div>
   );

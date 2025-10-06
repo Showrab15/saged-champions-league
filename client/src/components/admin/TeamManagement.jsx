@@ -114,7 +114,7 @@ const TeamManagement = ({ tournament }) => {
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-emerald-600 border border-primary rounded-lg px-4 py-3 text-red-700 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Enter team name"
               required
             />

@@ -2,12 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAq1N_yVuoC8JziYxrAZJoXi0c03qSkOY8",
+  authDomain: "saged-champions-league.firebaseapp.com",
+  projectId: "saged-champions-league",
+  storageBucket: "saged-champions-league.firebasestorage.app",
+  messagingSenderId: "91491203899",
+  appId: "1:91491203899:web:0ec58e30cf1bbb6cd9551e",
+  measurementId: "G-QL04195RV3",
 };
 
 const app = initializeApp(firebaseConfig);

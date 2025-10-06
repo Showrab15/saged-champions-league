@@ -1,54 +1,10 @@
-// // server/routes/match.routes.js
-// const express = require("express");
-// const router = express.Router();
-// const matchController = require("../controllers/match.controller");
-
-// // Get all matches for a tournament
-// router.get("/tournament/:tournamentId", matchController.getMatchesByTournament);
-
-// // Get match by ID
-// router.get("/:id", matchController.getMatchById);
-
-// // Create new match
-// router.post("/", matchController.createMatch);
-
-// // Update match (scores, winner)
-// router.put("/:id", matchController.updateMatch);
-
-// // Delete match
-// router.delete("/:id", matchController.deleteMatch);
-
-// // Generate tournament schedule
-// router.post("/generate-schedule", matchController.generateSchedule);
-
-// module.exports = router;
-// server/routes/match.routes.js
+// server/routes/playoff.routes.js
 const express = require("express");
-const router = express.Router();
-const matchController = require("../controllers/match.controller");
 const { ObjectId } = require("mongodb");
 const { getDB } = require("../config/db");
 
-// Get all matches for a tournament
-router.get("/tournament/:tournamentId", matchController.getMatchesByTournament);
+const router = express.Router();
 
-// Get match by ID
-router.get("/:id", matchController.getMatchById);
-
-// Create new match
-router.post("/", matchController.createMatch);
-
-// Update match (scores, winner)
-router.put("/:id", matchController.updateMatch);
-
-// Delete match
-router.delete("/:id", matchController.deleteMatch);
-
-// Generate tournament schedule
-router.post("/generate-schedule", matchController.generateSchedule);
-
-// Generate playoff matches
-// Generate playoff matches
 router.post("/generate-playoff", async (req, res) => {
   try {
     const db = getDB();
@@ -113,7 +69,7 @@ router.post("/generate-playoff", async (req, res) => {
     if (groupKeys.length >= 2) {
       semiFinals.push({
         tournamentId,
-        round: "semifinal",
+        round: "semifinal", // Changed to lowercase
         matchNumber: matchNumber++,
         team1Id: groups[groupKeys[0]][0].teamId,
         team1Name: groups[groupKeys[0]][0].teamName,
@@ -128,7 +84,7 @@ router.post("/generate-playoff", async (req, res) => {
 
       semiFinals.push({
         tournamentId,
-        round: "semifinal",
+        round: "semifinal", // Changed to lowercase
         matchNumber: matchNumber++,
         team1Id: groups[groupKeys[1]][0].teamId,
         team1Name: groups[groupKeys[1]][0].teamName,
@@ -142,16 +98,9 @@ router.post("/generate-playoff", async (req, res) => {
       });
     }
 
-    // ADD LOGGING HERE
-    console.log(
-      "Semi-finals to be inserted:",
-      JSON.stringify(semiFinals, null, 2)
-    );
-
     // Insert semi-final matches
     if (semiFinals.length) {
-      const result = await db.collection("matches").insertMany(semiFinals);
-      console.log("Inserted playoff matches:", result.insertedIds);
+      await db.collection("matches").insertMany(semiFinals);
     }
 
     res.json({

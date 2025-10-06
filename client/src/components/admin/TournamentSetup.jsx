@@ -147,7 +147,7 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-red-500 border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
@@ -161,14 +161,20 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, format: e.target.value })
                 }
-                className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-red-500 border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="round-robin">Round Robin (IPL Style)</option>
-                <option value="groups">Group Stage + Knockout</option>
-                <option value="groups-super4">
+                <option className="bg-pink-400" value="round-robin">
+                  Round Robin (IPL Style)
+                </option>
+                <option className="bg-pink-400" value="groups">
+                  Group Stage + Knockout
+                </option>
+                <option className="bg-pink-400" value="groups-super4">
                   Group Stage + Super 4 + Knockout
                 </option>
-                <option value="knockout">Direct Knockout</option>
+                <option className="bg-pink-400" value="knockout">
+                  Direct Knockout
+                </option>
               </select>
             </div>
 
@@ -187,7 +193,7 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
                         numGroups: parseInt(e.target.value),
                       })
                     }
-                    className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full bg-pink-500 border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="2">2 Groups</option>
                     <option value="4">4 Groups</option>
@@ -206,7 +212,7 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
                         qualifyPerGroup: parseInt(e.target.value),
                       })
                     }
-                    className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full bg-yellow-400 border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="1">Top 1</option>
                     <option value="2">Top 2</option>
@@ -222,7 +228,7 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, playoffFormat: e.target.value })
                 }
-                className="w-full bg-dark border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-red-500 border border-primary rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="semi-final">Semi-Final + Final</option>
                 <option value="qualifier">
@@ -234,7 +240,7 @@ const TournamentSetup = ({ tournament, onTournamentChange }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all duration-300 disabled:opacity-50"
+              className="w-full bg-red-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all duration-300 disabled:opacity-50"
             >
               {loading ? "Creating..." : "Create Tournament"}
             </button>

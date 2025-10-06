@@ -62,7 +62,7 @@ const AdminPage = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
               activeTab === tab.id
-                ? "bg-primary text-white"
+                ? "bg-primary text-red-500"
                 : "bg-secondary text-gray-400 hover:bg-gray-700"
             }`}
           >
