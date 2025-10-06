@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // client/src/components/user/Matches.jsx
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
