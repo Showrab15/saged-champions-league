@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/useAuth";
+import { setUserId, teamsAPI, tournamentsAPI } from "../services/api";
 
 const SagedianCricketLeague = () => {
   const [currentView, setCurrentView] = useState("home");
@@ -43,6 +45,110 @@ const SagedianCricketLeague = () => {
   const [hasGroupStage, setHasGroupStage] = useState(true);
   const [currentTab, setCurrentTab] = useState("matches");
 
+  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (currentUser) {
+      setUserId(currentUser.uid);
+      loadData();
+    }
+  }, [currentUser]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [teamsRes, tournamentsRes] = await Promise.all([
+        teamsAPI.getAll(),
+        tournamentsAPI.getAll(),
+      ]);
+      setTeams(teamsRes.data);
+      setTournaments(tournamentsRes.data);
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTeam = async () => {
+    if (newTeamName.trim()) {
+      try {
+        const response = await teamsAPI.create({
+          name: newTeamName.trim(),
+          color: getTeamColor(teams.length),
+        });
+        setTeams([...teams, response.data.team]);
+        setNewTeamName("");
+      } catch (error) {
+        alert("Failed to add team");
+      }
+    }
+  };
+
+  const createTournament = async () => {
+    if (!tournamentName.trim() || selectedTeams.length < 2) return;
+
+    try {
+      const { matches, groups } = generateMatches(
+        tournamentType,
+        selectedTeams,
+        groupCount,
+        knockoutStage,
+        hasGroupStage,
+        knockoutFormat
+      );
+
+      const response = await tournamentsAPI.create({
+        name: tournamentName,
+        type: tournamentType,
+        teams: selectedTeams,
+        matches,
+        groups,
+        groupCount,
+        knockoutStage,
+        knockoutFormat,
+        hasGroupStage,
+      });
+
+      setTournaments([...tournaments, response.data.tournament]);
+      setNewAdminCode(response.data.adminCode);
+      setShowAdminCodeModal(true);
+      setCurrentView("tournaments");
+      resetTournamentForm();
+    } catch (error) {
+      alert("Failed to create tournament");
+    }
+  };
+
+  const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
+    try {
+      await tournamentsAPI.updateMatch(tournamentId, matchId, {
+        adminCode: adminCode,
+        winner: winnerId,
+        team1Score: scores.team1Score,
+        team2Score: scores.team2Score,
+      });
+
+      // Reload tournament data
+      await loadData();
+      setEditingMatch(null);
+      setAdminCode("");
+    } catch (error) {
+      alert("Failed to update match result");
+    }
+  };
+
+  const deleteTournament = async (_id, code) => {
+    try {
+      await tournamentsAPI.delete(_id, code);
+      setTournaments(tournaments.filter((t) => t._id !== _id));
+      alert("Tournament deleted successfully!");
+    } catch (error) {
+      alert("Invalid admin code or failed to delete!");
+    }
+  };
+
   useEffect(() => {
     const sampleTeams = [
       "Dhaka Dynamites",
@@ -56,7 +162,7 @@ const SagedianCricketLeague = () => {
     ];
     setTeams(
       sampleTeams.map((name, idx) => ({
-        id: `team-${idx}`,
+        _id: `team-${idx}`,
         name,
         color: getTeamColor(idx),
       }))
@@ -77,20 +183,8 @@ const SagedianCricketLeague = () => {
     return colors[idx % colors.length];
   };
 
-  const addTeam = () => {
-    if (newTeamName.trim()) {
-      const newTeam = {
-        id: `team-${Date.now()}`,
-        name: newTeamName.trim(),
-        color: getTeamColor(teams.length),
-      };
-      setTeams([...teams, newTeam]);
-      setNewTeamName("");
-    }
-  };
-
-  const removeTeam = (id) => {
-    setTeams(teams.filter((team) => team.id !== id));
+  const removeTeam = (_id) => {
+    setTeams(teams.filter((team) => team._id !== _id));
   };
 
   const generateMatches = (
@@ -108,7 +202,7 @@ const SagedianCricketLeague = () => {
       for (let i = 0; i < selectedTeams.length; i++) {
         for (let j = i + 1; j < selectedTeams.length; j++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: selectedTeams[i],
             team2: selectedTeams[j],
             winner: null,
@@ -123,7 +217,7 @@ const SagedianCricketLeague = () => {
       if (selectedTeams.length >= 10 && knockoutStage === "quarter-final") {
         for (let i = 0; i < 4; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -136,7 +230,7 @@ const SagedianCricketLeague = () => {
 
       if (knockoutFormat === "ipl-style") {
         matches.push({
-          id: `match-${matches.length}`,
+          _id: `match-${matches.length}`,
           team1: null,
           team2: null,
           winner: null,
@@ -145,7 +239,7 @@ const SagedianCricketLeague = () => {
           team2Score: { runs: 0, overs: 0 },
         });
         matches.push({
-          id: `match-${matches.length}`,
+          _id: `match-${matches.length}`,
           team1: null,
           team2: null,
           winner: null,
@@ -154,7 +248,7 @@ const SagedianCricketLeague = () => {
           team2Score: { runs: 0, overs: 0 },
         });
         matches.push({
-          id: `match-${matches.length}`,
+          _id: `match-${matches.length}`,
           team1: null,
           team2: null,
           winner: null,
@@ -165,7 +259,7 @@ const SagedianCricketLeague = () => {
       } else if (knockoutFormat === "super-four-mini") {
         for (let i = 0; i < 3; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -180,7 +274,7 @@ const SagedianCricketLeague = () => {
       ) {
         for (let i = 0; i < 2; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -192,7 +286,7 @@ const SagedianCricketLeague = () => {
       }
 
       matches.push({
-        id: `match-${matches.length}`,
+        _id: `match-${matches.length}`,
         team1: null,
         team2: null,
         winner: null,
@@ -214,7 +308,7 @@ const SagedianCricketLeague = () => {
           for (let i = 0; i < groupTeams.length; i++) {
             for (let j = i + 1; j < groupTeams.length; j++) {
               matches.push({
-                id: `match-${matches.length}`,
+                _id: `match-${matches.length}`,
                 team1: groupTeams[i],
                 team2: groupTeams[j],
                 winner: null,
@@ -235,7 +329,7 @@ const SagedianCricketLeague = () => {
           groups[groupName] = [];
           for (let i = 0; i < 3; i++) {
             matches.push({
-              id: `match-${matches.length}`,
+              _id: `match-${matches.length}`,
               team1: null,
               team2: null,
               winner: null,
@@ -251,7 +345,7 @@ const SagedianCricketLeague = () => {
       if (knockoutStage === "super-four") {
         for (let i = 0; i < 3; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -265,7 +359,7 @@ const SagedianCricketLeague = () => {
       if (knockoutStage === "quarter-final") {
         for (let i = 0; i < 4; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -284,7 +378,7 @@ const SagedianCricketLeague = () => {
       ) {
         for (let i = 0; i < 2; i++) {
           matches.push({
-            id: `match-${matches.length}`,
+            _id: `match-${matches.length}`,
             team1: null,
             team2: null,
             winner: null,
@@ -296,7 +390,7 @@ const SagedianCricketLeague = () => {
       }
 
       matches.push({
-        id: `match-${matches.length}`,
+        _id: `match-${matches.length}`,
         team1: null,
         team2: null,
         winner: null,
@@ -309,7 +403,7 @@ const SagedianCricketLeague = () => {
         for (let i = 0; i < selectedTeams.length; i++) {
           for (let j = i + 1; j < selectedTeams.length; j++) {
             matches.push({
-              id: `match-${matches.length}`,
+              _id: `match-${matches.length}`,
               team1: selectedTeams[i],
               team2: selectedTeams[j],
               winner: null,
@@ -322,7 +416,7 @@ const SagedianCricketLeague = () => {
       }
 
       matches.push({
-        id: `match-${matches.length}`,
+        _id: `match-${matches.length}`,
         team1: null,
         team2: null,
         winner: null,
@@ -342,12 +436,12 @@ const SagedianCricketLeague = () => {
     let oversFaced = 0;
 
     matches.forEach((match) => {
-      if (match.team1 && match.team1.id === team.id && match.winner) {
+      if (match.team1 && match.team1._id === team._id && match.winner) {
         runsScored += match.team1Score.runs;
         oversPlayed += match.team1Score.overs;
         runsConceded += match.team2Score.runs;
         oversFaced += match.team2Score.overs;
-      } else if (match.team2 && match.team2.id === team.id && match.winner) {
+      } else if (match.team2 && match.team2._id === team._id && match.winner) {
         runsScored += match.team2Score.runs;
         oversPlayed += match.team2Score.overs;
         runsConceded += match.team1Score.runs;
@@ -363,7 +457,7 @@ const SagedianCricketLeague = () => {
     const table = {};
 
     tournament.teams.forEach((team) => {
-      table[team.id] = {
+      table[team._id] = {
         team,
         played: 0,
         won: 0,
@@ -375,23 +469,23 @@ const SagedianCricketLeague = () => {
 
     tournament.matches.forEach((match) => {
       if (match.winner && match.team1 && match.team2) {
-        table[match.team1.id].played++;
-        table[match.team2.id].played++;
+        table[match.team1._id].played++;
+        table[match.team2._id].played++;
 
-        if (match.winner === match.team1.id) {
-          table[match.team1.id].won++;
-          table[match.team1.id].points += 2;
-          table[match.team2.id].lost++;
+        if (match.winner === match.team1._id) {
+          table[match.team1._id].won++;
+          table[match.team1._id].points += 2;
+          table[match.team2._id].lost++;
         } else {
-          table[match.team2.id].won++;
-          table[match.team2.id].points += 2;
-          table[match.team1.id].lost++;
+          table[match.team2._id].won++;
+          table[match.team2._id].points += 2;
+          table[match.team1._id].lost++;
         }
       }
     });
 
     tournament.teams.forEach((team) => {
-      table[team.id].nrr = calculateNRR(team, tournament.matches);
+      table[team._id].nrr = calculateNRR(team, tournament.matches);
     });
 
     return Object.values(table).sort((a, b) => {
@@ -400,80 +494,10 @@ const SagedianCricketLeague = () => {
     });
   };
 
-  const createTournament = () => {
-    if (!tournamentName.trim() || selectedTeams.length < 2) return;
-
-    const adminCodeGenerated = Math.random()
-      .toString(36)
-      .substring(2, 10)
-      .toUpperCase();
-    const { matches, groups } = generateMatches(
-      tournamentType,
-      selectedTeams,
-      groupCount,
-      knockoutStage,
-      hasGroupStage,
-      knockoutFormat
-    );
-
-    const newTournament = {
-      id: `tournament-${Date.now()}`,
-      name: tournamentName,
-      type: tournamentType,
-      teams: selectedTeams,
-      matches,
-      groups,
-      adminCode: adminCodeGenerated,
-      createdAt: new Date().toISOString(),
-      status: "ongoing",
-      groupCount,
-      knockoutStage,
-      knockoutFormat,
-      hasGroupStage,
-    };
-
-    setTournaments([...tournaments, newTournament]);
-    setNewAdminCode(adminCodeGenerated);
-    setShowAdminCodeModal(true);
-    setCurrentView("tournaments");
-    resetTournamentForm();
-  };
-
   const resetTournamentForm = () => {
     setTournamentName("");
     setSelectedTeams([]);
     setTournamentType("round-robin");
-  };
-
-  const updateMatchResult = (tournamentId, matchId, winnerId, scores) => {
-    setTournaments(
-      tournaments.map((t) => {
-        if (t.id === tournamentId) {
-          return {
-            ...t,
-            matches: t.matches.map((m) => {
-              if (m.id === matchId) {
-                return {
-                  ...m,
-                  winner: winnerId,
-                  team1Score:
-                    scores && scores.team1Score
-                      ? scores.team1Score
-                      : m.team1Score,
-                  team2Score:
-                    scores && scores.team2Score
-                      ? scores.team2Score
-                      : m.team2Score,
-                };
-              }
-              return m;
-            }),
-          };
-        }
-        return t;
-      })
-    );
-    setEditingMatch(null);
   };
 
   const calculateStats = (tournament) => {
@@ -485,8 +509,8 @@ const SagedianCricketLeague = () => {
       // Initialize stats for teams
       [match.team1, match.team2].forEach((team) => {
         if (!team) return;
-        if (!playerStats[team.id]) {
-          playerStats[team.id] = {
+        if (!playerStats[team._id]) {
+          playerStats[team._id] = {
             team: team,
             runs: 0,
             wickets: 0,
@@ -499,22 +523,22 @@ const SagedianCricketLeague = () => {
 
       // Add match stats
       if (match.team1 && match.team1Score.runs > 0) {
-        playerStats[match.team1.id].runs += match.team1Score.runs;
-        playerStats[match.team1.id].matches++;
+        playerStats[match.team1._id].runs += match.team1Score.runs;
+        playerStats[match.team1._id].matches++;
       }
       if (match.team2 && match.team2Score.runs > 0) {
-        playerStats[match.team2.id].runs += match.team2Score.runs;
-        playerStats[match.team2.id].matches++;
+        playerStats[match.team2._id].runs += match.team2Score.runs;
+        playerStats[match.team2._id].matches++;
       }
 
       // Calculate bowling stats (simplified)
       if (match.team1 && match.team2 && match.team2Score.runs > 0) {
-        playerStats[match.team1.id].runsGiven += match.team2Score.runs;
-        playerStats[match.team1.id].oversBowled += match.team2Score.overs;
+        playerStats[match.team1._id].runsGiven += match.team2Score.runs;
+        playerStats[match.team1._id].oversBowled += match.team2Score.overs;
       }
       if (match.team2 && match.team1 && match.team1Score.runs > 0) {
-        playerStats[match.team2.id].runsGiven += match.team1Score.runs;
-        playerStats[match.team2.id].oversBowled += match.team1Score.overs;
+        playerStats[match.team2._id].runsGiven += match.team1Score.runs;
+        playerStats[match.team2._id].oversBowled += match.team1Score.overs;
       }
     });
 
@@ -541,16 +565,6 @@ const SagedianCricketLeague = () => {
         .sort((a, b) => b.score - a.score)
         .slice(0, 5),
     };
-  };
-
-  const deleteTournament = (id, code) => {
-    const tournament = tournaments.find((t) => t.id === id);
-    if (tournament && tournament.adminCode === code) {
-      setTournaments(tournaments.filter((t) => t.id !== id));
-      alert("Tournament deleted successfully!");
-    } else {
-      alert("Invalid admin code!");
-    }
   };
 
   const filteredTournaments = tournaments.filter((t) => {
@@ -620,9 +634,9 @@ const SagedianCricketLeague = () => {
           <div className="text-sm text-slate-400">Winner</div>
           <div className="flex gap-2">
             <button
-              onClick={() => setWinner(match.team1 ? match.team1.id : null)}
+              onClick={() => setWinner(match.team1 ? match.team1._id : null)}
               className={`flex-1 px-3 py-2 rounded transition-all ${
-                winner === (match.team1 ? match.team1.id : null)
+                winner === (match.team1 ? match.team1._id : null)
                   ? "bg-emerald-600"
                   : "bg-slate-700"
               }`}
@@ -630,9 +644,9 @@ const SagedianCricketLeague = () => {
               {match.team1 ? match.team1.name : "TBD"}
             </button>
             <button
-              onClick={() => setWinner(match.team2 ? match.team2.id : null)}
+              onClick={() => setWinner(match.team2 ? match.team2._id : null)}
               className={`flex-1 px-3 py-2 rounded transition-all ${
-                winner === (match.team2 ? match.team2.id : null)
+                winner === (match.team2 ? match.team2._id : null)
                   ? "bg-emerald-600"
                   : "bg-slate-700"
               }`}
@@ -835,7 +849,7 @@ const SagedianCricketLeague = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {teams.map((team) => (
                   <div
-                    key={team.id}
+                    key={team._id}
                     className="bg-slate-700 p-4 rounded-lg flex items-center justify-between hover:scale-105 transition-all"
                     style={{ borderLeft: `4px solid ${team.color}` }}
                   >
@@ -849,7 +863,7 @@ const SagedianCricketLeague = () => {
                       <span className="font-medium">{team.name}</span>
                     </div>
                     <button
-                      onClick={() => removeTeam(team.id)}
+                      onClick={() => removeTeam(team._id)}
                       className="text-red-500 hover:text-red-400 transition-all"
                     >
                       <Trash2 size={18} />
@@ -1066,24 +1080,24 @@ const SagedianCricketLeague = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-2">
                   {teams.map((team) => (
                     <button
-                      key={team.id}
+                      key={team._id}
                       onClick={() => {
                         if (
                           tournamentType === "tri-series" &&
                           selectedTeams.length >= 3 &&
-                          !selectedTeams.find((t) => t.id === team.id)
+                          !selectedTeams.find((t) => t._id === team._id)
                         ) {
                           alert("Tri-series can only have 3 teams");
                           return;
                         }
                         setSelectedTeams((prev) =>
-                          prev.find((t) => t.id === team.id)
-                            ? prev.filter((t) => t.id !== team.id)
+                          prev.find((t) => t._id === team._id)
+                            ? prev.filter((t) => t._id !== team._id)
                             : [...prev, team]
                         );
                       }}
                       className={`p-3 rounded-lg border-2 transition-all text-left ${
-                        selectedTeams.find((t) => t.id === team.id)
+                        selectedTeams.find((t) => t._id === team._id)
                           ? "border-emerald-600 bg-emerald-600/20"
                           : "border-slate-600 hover:border-slate-500"
                       }`}
@@ -1100,7 +1114,6 @@ const SagedianCricketLeague = () => {
 
               <button
                 onClick={createTournament}
-                disabled={!tournamentName.trim() || selectedTeams.length < 2}
                 className="w-full bg-emerald-600 px-6 py-4 rounded-lg hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg flex items-center justify-center gap-2"
               >
                 <Trophy size={24} /> Create Tournament
@@ -1154,7 +1167,7 @@ const SagedianCricketLeague = () => {
               <div className="grid grid-cols-1 gap-6">
                 {filteredTournaments.map((tournament) => (
                   <div
-                    key={tournament.id}
+                    key={tournament._id}
                     className="bg-slate-800 rounded-xl overflow-hidden border-2 border-slate-700 hover:border-blue-600 transition-all"
                   >
                     <div className="p-6">
@@ -1217,7 +1230,7 @@ const SagedianCricketLeague = () => {
                               const code = prompt(
                                 "Enter admin code to delete:"
                               );
-                              if (code) deleteTournament(tournament.id, code);
+                              if (code) deleteTournament(tournament._id, code);
                             }}
                             className="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700 transition-all"
                           >
@@ -1231,7 +1244,7 @@ const SagedianCricketLeague = () => {
                           .slice(0, 4)
                           .map((entry, idx) => (
                             <div
-                              key={entry.team.id}
+                              key={entry.team._id}
                               className="bg-slate-700 p-3 rounded-lg"
                             >
                               <div className="text-xs text-slate-400 mb-1">
@@ -1339,7 +1352,7 @@ const SagedianCricketLeague = () => {
                             {calculatePointsTable(selectedTournament).map(
                               (entry, idx) => (
                                 <tr
-                                  key={entry.team.id}
+                                  key={entry.team._id}
                                   className="border-t border-slate-700 hover:bg-slate-800 transition-all"
                                 >
                                   <td className="px-4 py-3 font-bold">
@@ -1402,18 +1415,18 @@ const SagedianCricketLeague = () => {
                             <div className="space-y-3">
                               {matches.map((match) => (
                                 <div
-                                  key={match.id}
+                                  key={match._id}
                                   className="bg-slate-700 p-4 rounded-lg"
                                 >
-                                  {editingMatch === match.id &&
+                                  {editingMatch === match._id &&
                                   adminCode === selectedTournament.adminCode ? (
                                     <MatchEditor
                                       match={match}
                                       tournament={selectedTournament}
                                       onSave={(winner, scores) => {
                                         updateMatchResult(
-                                          selectedTournament.id,
-                                          match.id,
+                                          selectedTournament._id,
+                                          match._id,
                                           winner,
                                           scores
                                         );
@@ -1428,7 +1441,7 @@ const SagedianCricketLeague = () => {
                                           className={`flex items-center justify-between p-3 rounded ${
                                             match.winner ===
                                             (match.team1
-                                              ? match.team1.id
+                                              ? match.team1._id
                                               : null)
                                               ? "bg-emerald-600/20 border-2 border-emerald-600"
                                               : "bg-slate-800"
@@ -1461,7 +1474,7 @@ const SagedianCricketLeague = () => {
                                           className={`flex items-center justify-between p-3 rounded ${
                                             match.winner ===
                                             (match.team2
-                                              ? match.team2.id
+                                              ? match.team2._id
                                               : null)
                                               ? "bg-emerald-600/20 border-2 border-emerald-600"
                                               : "bg-slate-800"
@@ -1495,7 +1508,7 @@ const SagedianCricketLeague = () => {
                                         <div className="text-sm text-emerald-400 mb-2">
                                           Winner:{" "}
                                           {match.team1 &&
-                                          match.winner === match.team1.id
+                                          match.winner === match.team1._id
                                             ? match.team1.name
                                             : match.team2
                                             ? match.team2.name
@@ -1508,7 +1521,7 @@ const SagedianCricketLeague = () => {
                                         match.team2 && (
                                           <button
                                             onClick={() =>
-                                              setEditingMatch(match.id)
+                                              setEditingMatch(match._id)
                                             }
                                             className="w-full bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                                           >
@@ -1560,7 +1573,7 @@ const SagedianCricketLeague = () => {
                                   <tbody>
                                     {stats.topScorers.map((scorer, idx) => (
                                       <tr
-                                        key={scorer.team.id}
+                                        key={scorer.team._id}
                                         className="border-t border-slate-700"
                                       >
                                         <td className="px-4 py-3">
@@ -1610,7 +1623,7 @@ const SagedianCricketLeague = () => {
                                   <tbody>
                                     {stats.mostEconomical.map((bowler) => (
                                       <tr
-                                        key={bowler.team.id}
+                                        key={bowler.team._id}
                                         className="border-t border-slate-700"
                                       >
                                         <td className="px-4 py-3">
