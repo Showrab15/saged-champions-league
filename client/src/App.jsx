@@ -8,6 +8,7 @@ import { auth } from "./firebase/config";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import SagedianCricketLeague from "./pages/SagedianCricketLeague.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/previous" element={<PreviousTournamentsPage />} />
+        <Route path="/extra" element={<SagedianCricketLeague />} />
 
         <Route
           path="/admin"
