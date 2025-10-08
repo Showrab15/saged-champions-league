@@ -149,25 +149,25 @@ const SagedianCricketLeague = () => {
     }
   };
 
-  useEffect(() => {
-    const sampleTeams = [
-      "Dhaka Dynamites",
-      "Chittagong Challengers",
-      "Sylhet Strikers",
-      "Rajshahi Raiders",
-      "Khulna Kings",
-      "Rangpur Rangers",
-      "Comilla Crushers",
-      "Mymensingh Mavericks",
-    ];
-    setTeams(
-      sampleTeams.map((name, idx) => ({
-        _id: `team-${idx}`,
-        name,
-        color: getTeamColor(idx),
-      }))
-    );
-  }, []);
+  // useEffect(() => {
+  //   const sampleTeams = [
+  //     "Dhaka Dynamites",
+  //     "Chittagong Challengers",
+  //     "Sylhet Strikers",
+  //     "Rajshahi Raiders",
+  //     "Khulna Kings",
+  //     "Rangpur Rangers",
+  //     "Comilla Crushers",
+  //     "Mymensingh Mavericks",
+  //   ];
+  //   setTeams(
+  //     sampleTeams.map((name, idx) => ({
+  //       _id: `team-${idx}`,
+  //       name,
+  //       color: getTeamColor(idx),
+  //     }))
+  //   );
+  // }, []);
 
   const getTeamColor = (idx) => {
     const colors = [
@@ -183,8 +183,15 @@ const SagedianCricketLeague = () => {
     return colors[idx % colors.length];
   };
 
-  const removeTeam = (_id) => {
-    setTeams(teams.filter((team) => team._id !== _id));
+  const removeTeam = async (_id) => {
+    try {
+      await teamsAPI.delete(_id); // 🔥 make actual delete request to backend
+      setTeams(teams.filter((team) => team._id !== _id)); // then update state
+      alert("Team deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete team:", error);
+      alert(error.response?.data?.message || "Failed to delete team.");
+    }
   };
 
   const generateMatches = (
@@ -492,6 +499,80 @@ const SagedianCricketLeague = () => {
       if (b.points !== a.points) return b.points - a.points;
       return parseFloat(b.nrr) - parseFloat(a.nrr);
     });
+  };
+
+  // Add this new function right after calculatePointsTable
+  const calculateGroupPointsTables = (tournament) => {
+    if (
+      tournament.type !== "group-stage" ||
+      !tournament.groups ||
+      Object.keys(tournament.groups).length === 0
+    ) {
+      return null;
+    }
+
+    const groupTables = {};
+
+    Object.entries(tournament.groups).forEach(([groupName, groupTeams]) => {
+      groupTables[groupName] = {};
+
+      groupTeams.forEach((team) => {
+        groupTables[groupName][team._id] = {
+          team,
+          played: 0,
+          won: 0,
+          lost: 0,
+          points: 0,
+          nrr: 0,
+        };
+      });
+    });
+
+    tournament.matches.forEach((match) => {
+      if (match.group && match.winner && match.team1 && match.team2) {
+        const groupName = match.group;
+
+        if (groupTables[groupName]) {
+          const table = groupTables[groupName];
+
+          if (table[match.team1._id]) table[match.team1._id].played++;
+          if (table[match.team2._id]) table[match.team2._id].played++;
+
+          if (match.winner === match.team1._id && table[match.team1._id]) {
+            table[match.team1._id].won++;
+            table[match.team1._id].points += 2;
+            if (table[match.team2._id]) table[match.team2._id].lost++;
+          } else if (
+            match.winner === match.team2._id &&
+            table[match.team2._id]
+          ) {
+            table[match.team2._id].won++;
+            table[match.team2._id].points += 2;
+            if (table[match.team1._id]) table[match.team1._id].lost++;
+          }
+        }
+      }
+    });
+
+    Object.entries(groupTables).forEach(([groupName, table]) => {
+      Object.values(table).forEach((entry) => {
+        const groupMatches = tournament.matches.filter(
+          (m) => m.group === groupName
+        );
+        entry.nrr = calculateNRR(entry.team, groupMatches);
+      });
+    });
+
+    Object.keys(groupTables).forEach((groupName) => {
+      groupTables[groupName] = Object.values(groupTables[groupName]).sort(
+        (a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          return parseFloat(b.nrr) - parseFloat(a.nrr);
+        }
+      );
+    });
+
+    return groupTables;
   };
 
   const resetTournamentForm = () => {
@@ -1335,63 +1416,159 @@ const SagedianCricketLeague = () => {
                       <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                         <BarChart3 className="text-yellow-500" /> Points Table
                       </h3>
-                      <div className="bg-slate-900 rounded-lg overflow-hidden">
-                        <table className="w-full">
-                          <thead className="bg-slate-700">
-                            <tr>
-                              <th className="px-4 py-3 text-left">Pos</th>
-                              <th className="px-4 py-3 text-left">Team</th>
-                              <th className="px-4 py-3 text-center">P</th>
-                              <th className="px-4 py-3 text-center">W</th>
-                              <th className="px-4 py-3 text-center">L</th>
-                              <th className="px-4 py-3 text-center">Pts</th>
-                              <th className="px-4 py-3 text-center">NRR</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {calculatePointsTable(selectedTournament).map(
-                              (entry, idx) => (
-                                <tr
-                                  key={entry.team._id}
-                                  className="border-t border-slate-700 hover:bg-slate-800 transition-all"
-                                >
-                                  <td className="px-4 py-3 font-bold">
-                                    {idx + 1}
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex items-center gap-2">
-                                      <div
-                                        className="w-6 h-6 rounded-full"
-                                        style={{
-                                          backgroundColor: entry.team.color,
-                                        }}
-                                      />
-                                      <span className="font-medium">
-                                        {entry.team.name}
-                                      </span>
+
+                      {(() => {
+                        const groupTables =
+                          calculateGroupPointsTables(selectedTournament);
+
+                        // If group stage tournament with groups, show separate tables
+                        if (groupTables) {
+                          return (
+                            <div className="space-y-6">
+                              {Object.entries(groupTables).map(
+                                ([groupName, table]) => (
+                                  <div key={groupName}>
+                                    <h4 className="text-lg font-bold mb-3 text-blue-400">
+                                      {groupName}
+                                    </h4>
+                                    <div className="bg-slate-900 rounded-lg overflow-hidden">
+                                      <table className="w-full">
+                                        <thead className="bg-slate-700">
+                                          <tr>
+                                            <th className="px-4 py-3 text-left">
+                                              Pos
+                                            </th>
+                                            <th className="px-4 py-3 text-left">
+                                              Team
+                                            </th>
+                                            <th className="px-4 py-3 text-center">
+                                              P
+                                            </th>
+                                            <th className="px-4 py-3 text-center">
+                                              W
+                                            </th>
+                                            <th className="px-4 py-3 text-center">
+                                              L
+                                            </th>
+                                            <th className="px-4 py-3 text-center">
+                                              Pts
+                                            </th>
+                                            <th className="px-4 py-3 text-center">
+                                              NRR
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {table.map((entry, idx) => (
+                                            <tr
+                                              key={entry.team._id}
+                                              className="border-t border-slate-700 hover:bg-slate-800 transition-all"
+                                            >
+                                              <td className="px-4 py-3 font-bold">
+                                                {idx + 1}
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                  <div
+                                                    className="w-6 h-6 rounded-full"
+                                                    style={{
+                                                      backgroundColor:
+                                                        entry.team.color,
+                                                    }}
+                                                  />
+                                                  <span className="font-medium">
+                                                    {entry.team.name}
+                                                  </span>
+                                                </div>
+                                              </td>
+                                              <td className="px-4 py-3 text-center">
+                                                {entry.played}
+                                              </td>
+                                              <td className="px-4 py-3 text-center text-emerald-400">
+                                                {entry.won}
+                                              </td>
+                                              <td className="px-4 py-3 text-center text-red-400">
+                                                {entry.lost}
+                                              </td>
+                                              <td className="px-4 py-3 text-center font-bold text-blue-400">
+                                                {entry.points}
+                                              </td>
+                                              <td className="px-4 py-3 text-center">
+                                                {entry.nrr}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
                                     </div>
-                                  </td>
-                                  <td className="px-4 py-3 text-center">
-                                    {entry.played}
-                                  </td>
-                                  <td className="px-4 py-3 text-center text-emerald-400">
-                                    {entry.won}
-                                  </td>
-                                  <td className="px-4 py-3 text-center text-red-400">
-                                    {entry.lost}
-                                  </td>
-                                  <td className="px-4 py-3 text-center font-bold text-blue-400">
-                                    {entry.points}
-                                  </td>
-                                  <td className="px-4 py-3 text-center">
-                                    {entry.nrr}
-                                  </td>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // Otherwise show regular single table
+                        return (
+                          <div className="bg-slate-900 rounded-lg overflow-hidden">
+                            <table className="w-full">
+                              <thead className="bg-slate-700">
+                                <tr>
+                                  <th className="px-4 py-3 text-left">Pos</th>
+                                  <th className="px-4 py-3 text-left">Team</th>
+                                  <th className="px-4 py-3 text-center">P</th>
+                                  <th className="px-4 py-3 text-center">W</th>
+                                  <th className="px-4 py-3 text-center">L</th>
+                                  <th className="px-4 py-3 text-center">Pts</th>
+                                  <th className="px-4 py-3 text-center">NRR</th>
                                 </tr>
-                              )
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                              </thead>
+                              <tbody>
+                                {calculatePointsTable(selectedTournament).map(
+                                  (entry, idx) => (
+                                    <tr
+                                      key={entry.team._id}
+                                      className="border-t border-slate-700 hover:bg-slate-800 transition-all"
+                                    >
+                                      <td className="px-4 py-3 font-bold">
+                                        {idx + 1}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-6 h-6 rounded-full"
+                                            style={{
+                                              backgroundColor: entry.team.color,
+                                            }}
+                                          />
+                                          <span className="font-medium">
+                                            {entry.team.name}
+                                          </span>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        {entry.played}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-emerald-400">
+                                        {entry.won}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-red-400">
+                                        {entry.lost}
+                                      </td>
+                                      <td className="px-4 py-3 text-center font-bold text-blue-400">
+                                        {entry.points}
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        {entry.nrr}
+                                      </td>
+                                    </tr>
+                                  )
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
@@ -1465,8 +1642,8 @@ const SagedianCricketLeague = () => {
                                           </div>
                                           {match.winner && (
                                             <span className="font-bold">
-                                              {match.team1Score.runs}/
-                                              {match.team1Score.overs}
+                                              {match.team1Score.runs} (
+                                              {match.team1Score.overs} over)
                                             </span>
                                           )}
                                         </div>
@@ -1498,8 +1675,8 @@ const SagedianCricketLeague = () => {
                                           </div>
                                           {match.winner && (
                                             <span className="font-bold">
-                                              {match.team2Score.runs}/
-                                              {match.team2Score.overs}
+                                              {match.team1Score.runs} (
+                                              {match.team1Score.overs} over)
                                             </span>
                                           )}
                                         </div>

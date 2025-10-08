@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // AuthProvider.jsx
 /* eslint-disable no-unused-vars */
 import axios from "axios";
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:5000"; // Change for production
+  const API_URL = "https://cricket-league-backend.vercel.app"; // Change for production
 
   const syncUserWithBackend = async (firebaseUser) => {
     if (firebaseUser) {
