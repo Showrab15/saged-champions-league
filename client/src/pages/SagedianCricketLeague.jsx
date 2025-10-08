@@ -121,23 +121,23 @@ const SagedianCricketLeague = () => {
     }
   };
 
-  const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
-    try {
-      await tournamentsAPI.updateMatch(tournamentId, matchId, {
-        adminCode: adminCode,
-        winner: winnerId,
-        team1Score: scores.team1Score,
-        team2Score: scores.team2Score,
-      });
+  // const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
+  //   try {
+  //     await tournamentsAPI.updateMatch(tournamentId, matchId, {
+  //       adminCode: adminCode,
+  //       winner: winnerId,
+  //       team1Score: scores.team1Score,
+  //       team2Score: scores.team2Score,
+  //     });
 
-      // Reload tournament data
-      await loadData();
-      setEditingMatch(null);
-      setAdminCode("");
-    } catch (error) {
-      alert("Failed to update match result");
-    }
-  };
+  //     // Reload tournament data
+  //     await loadData();
+  //     setEditingMatch(null);
+  //     setAdminCode("");
+  //   } catch (error) {
+  //     alert("Failed to update match result");
+  //   }
+  // };
 
   const deleteTournament = async (_id, code) => {
     try {
@@ -671,21 +671,31 @@ const SagedianCricketLeague = () => {
               {match.team1 ? match.team1.name : "TBD"}
             </div>
             <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Runs"
-                value={team1Runs}
-                onChange={(e) => setTeam1Runs(Number(e.target.value))}
-                className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
-              />
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Overs"
-                value={team1Overs}
-                onChange={(e) => setTeam1Overs(Number(e.target.value))}
-                className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
-              />
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">
+                  Runs
+                </label>
+                <input
+                  type="number"
+                  placeholder="Runs"
+                  value={team1Runs}
+                  onChange={(e) => setTeam1Runs(Number(e.target.value))}
+                  className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">
+                  Overs
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="Overs"
+                  value={team1Overs}
+                  onChange={(e) => setTeam1Overs(Number(e.target.value))}
+                  className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
+                />
+              </div>
             </div>
           </div>
           <div>
@@ -693,21 +703,31 @@ const SagedianCricketLeague = () => {
               {match.team2 ? match.team2.name : "TBD"}
             </div>
             <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Runs"
-                value={team2Runs}
-                onChange={(e) => setTeam2Runs(Number(e.target.value))}
-                className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
-              />
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Overs"
-                value={team2Overs}
-                onChange={(e) => setTeam2Overs(Number(e.target.value))}
-                className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
-              />
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">
+                  Runs
+                </label>
+                <input
+                  type="number"
+                  placeholder="Runs"
+                  value={team2Runs}
+                  onChange={(e) => setTeam2Runs(Number(e.target.value))}
+                  className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">
+                  Overs
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="Overs"
+                  value={team2Overs}
+                  onChange={(e) => setTeam2Overs(Number(e.target.value))}
+                  className="w-20 px-2 py-1 bg-slate-700 rounded text-sm"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -759,6 +779,308 @@ const SagedianCricketLeague = () => {
     );
   };
 
+  const updateKnockoutStages = async (tournament) => {
+    try {
+      const pointsTable = calculatePointsTable(tournament);
+      const groupTables = calculateGroupPointsTables(tournament);
+      let updatedMatches = [...tournament.matches];
+      let hasUpdates = false;
+
+      if (tournament.type === "round-robin") {
+        // Check if all league matches are complete
+        const leagueMatches = updatedMatches.filter(
+          (m) => m.stage === "League"
+        );
+        const allLeagueComplete = leagueMatches.every((m) => m.winner);
+
+        if (allLeagueComplete && pointsTable.length >= 4) {
+          // Update playoff matches based on format
+          if (tournament.knockoutFormat === "ipl-style") {
+            // Qualifier 1: 1st vs 2nd
+            const q1 = updatedMatches.find((m) => m.stage === "Qualifier 1");
+            if (q1 && !q1.team1) {
+              q1.team1 = pointsTable[0].team;
+              q1.team2 = pointsTable[1].team;
+              hasUpdates = true;
+            }
+
+            // Eliminator: 3rd vs 4th
+            const elim = updatedMatches.find((m) => m.stage === "Eliminator");
+            if (elim && !elim.team1) {
+              elim.team1 = pointsTable[2].team;
+              elim.team2 = pointsTable[3].team;
+              hasUpdates = true;
+            }
+
+            // Qualifier 2: Loser of Q1 vs Winner of Eliminator
+            const q1Match = updatedMatches.find(
+              (m) => m.stage === "Qualifier 1"
+            );
+            const elimMatch = updatedMatches.find(
+              (m) => m.stage === "Eliminator"
+            );
+            if (q1Match?.winner && elimMatch?.winner) {
+              const q2 = updatedMatches.find((m) => m.stage === "Qualifier 2");
+              if (q2 && !q2.team1) {
+                const q1Loser =
+                  q1Match.winner === q1Match.team1._id
+                    ? q1Match.team2
+                    : q1Match.team1;
+                const elimWinner =
+                  elimMatch.winner === elimMatch.team1._id
+                    ? elimMatch.team1
+                    : elimMatch.team2;
+                q2.team1 = q1Loser;
+                q2.team2 = elimWinner;
+                hasUpdates = true;
+              }
+            }
+
+            // Final: Winner of Q1 vs Winner of Q2
+            const q2Match = updatedMatches.find(
+              (m) => m.stage === "Qualifier 2"
+            );
+            if (q1Match?.winner && q2Match?.winner) {
+              const final = updatedMatches.find((m) => m.stage === "Final");
+              if (final && !final.team1) {
+                const q1Winner =
+                  q1Match.winner === q1Match.team1._id
+                    ? q1Match.team1
+                    : q1Match.team2;
+                const q2Winner =
+                  q2Match.winner === q2Match.team1._id
+                    ? q2Match.team1
+                    : q2Match.team2;
+                final.team1 = q1Winner;
+                final.team2 = q2Winner;
+                hasUpdates = true;
+              }
+            }
+          } else if (tournament.knockoutFormat === "super-four-mini") {
+            // Top 4 teams play mini round-robin
+            const superFourMatches = updatedMatches.filter(
+              (m) => m.stage === "Super Four"
+            );
+            if (superFourMatches.length > 0 && !superFourMatches[0].team1) {
+              const top4 = pointsTable.slice(0, 4);
+              superFourMatches[0].team1 = top4[0].team;
+              superFourMatches[0].team2 = top4[1].team;
+              superFourMatches[1].team1 = top4[0].team;
+              superFourMatches[1].team2 = top4[2].team;
+              superFourMatches[2].team1 = top4[1].team;
+              superFourMatches[2].team2 = top4[2].team;
+              hasUpdates = true;
+            }
+
+            // Check if Super Four is complete and update final
+            const allSuperFourComplete = superFourMatches.every(
+              (m) => m.winner
+            );
+            if (allSuperFourComplete) {
+              const superFourTable = calculatePointsTable({
+                ...tournament,
+                matches: superFourMatches,
+                teams: pointsTable.slice(0, 4).map((e) => e.team),
+              });
+              const final = updatedMatches.find((m) => m.stage === "Final");
+              if (final && !final.team1 && superFourTable.length >= 2) {
+                final.team1 = superFourTable[0].team;
+                final.team2 = superFourTable[1].team;
+                hasUpdates = true;
+              }
+            }
+          } else {
+            // Standard semi-finals: 1 vs 4, 2 vs 3
+            const semiFinals = updatedMatches.filter(
+              (m) => m.stage === "Semi Final"
+            );
+            if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+              semiFinals[0].team1 = pointsTable[0].team;
+              semiFinals[0].team2 = pointsTable[3].team;
+              semiFinals[1].team1 = pointsTable[1].team;
+              semiFinals[1].team2 = pointsTable[2].team;
+              hasUpdates = true;
+            }
+          }
+        }
+
+        // Update final based on semi-final results (for standard/super-four)
+        if (tournament.knockoutFormat !== "ipl-style") {
+          const semiFinals = updatedMatches.filter(
+            (m) => m.stage === "Semi Final"
+          );
+          const allSemisComplete = semiFinals.every((m) => m.winner);
+          if (allSemisComplete && semiFinals.length === 2) {
+            const final = updatedMatches.find((m) => m.stage === "Final");
+            if (final && !final.team1) {
+              final.team1 =
+                semiFinals[0].team1._id === semiFinals[0].winner
+                  ? semiFinals[0].team1
+                  : semiFinals[0].team2;
+              final.team2 =
+                semiFinals[1].team1._id === semiFinals[1].winner
+                  ? semiFinals[1].team1
+                  : semiFinals[1].team2;
+              hasUpdates = true;
+            }
+          }
+        }
+      } else if (tournament.type === "group-stage" && groupTables) {
+        // Check if all group matches are complete
+        const groupMatches = updatedMatches.filter(
+          (m) => m.group && !m.group.includes("Super")
+        );
+        const allGroupsComplete = groupMatches.every((m) => m.winner);
+
+        if (allGroupsComplete) {
+          const qualifiers = [];
+          Object.values(groupTables).forEach((table) => {
+            qualifiers.push(table[0].team, table[1].team); // Top 2 from each group
+          });
+
+          if (tournament.knockoutStage === "semi-final") {
+            const semiFinals = updatedMatches.filter(
+              (m) => m.stage === "Semi Final"
+            );
+            if (
+              semiFinals.length >= 2 &&
+              !semiFinals[0].team1 &&
+              qualifiers.length >= 4
+            ) {
+              semiFinals[0].team1 = qualifiers[0];
+              semiFinals[0].team2 = qualifiers[3];
+              semiFinals[1].team1 = qualifiers[1];
+              semiFinals[1].team2 = qualifiers[2];
+              hasUpdates = true;
+            }
+          } else if (
+            tournament.knockoutStage === "quarter-final" &&
+            qualifiers.length >= 8
+          ) {
+            const quarterFinals = updatedMatches.filter(
+              (m) => m.stage === "Quarter Final"
+            );
+            if (quarterFinals.length >= 4 && !quarterFinals[0].team1) {
+              quarterFinals[0].team1 = qualifiers[0];
+              quarterFinals[0].team2 = qualifiers[7];
+              quarterFinals[1].team1 = qualifiers[1];
+              quarterFinals[1].team2 = qualifiers[6];
+              quarterFinals[2].team1 = qualifiers[2];
+              quarterFinals[2].team2 = qualifiers[5];
+              quarterFinals[3].team1 = qualifiers[3];
+              quarterFinals[3].team2 = qualifiers[4];
+              hasUpdates = true;
+            }
+
+            // Update semis from quarters
+            const allQFComplete = quarterFinals.every((m) => m.winner);
+            if (allQFComplete) {
+              const semiFinals = updatedMatches.filter(
+                (m) => m.stage === "Semi Final"
+              );
+              if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+                semiFinals[0].team1 =
+                  quarterFinals[0].winner === quarterFinals[0].team1._id
+                    ? quarterFinals[0].team1
+                    : quarterFinals[0].team2;
+                semiFinals[0].team2 =
+                  quarterFinals[1].winner === quarterFinals[1].team1._id
+                    ? quarterFinals[1].team1
+                    : quarterFinals[1].team2;
+                semiFinals[1].team1 =
+                  quarterFinals[2].winner === quarterFinals[2].team1._id
+                    ? quarterFinals[2].team1
+                    : quarterFinals[2].team2;
+                semiFinals[1].team2 =
+                  quarterFinals[3].winner === quarterFinals[3].team1._id
+                    ? quarterFinals[3].team1
+                    : quarterFinals[3].team2;
+                hasUpdates = true;
+              }
+            }
+          }
+        }
+
+        // Update final
+        const semiFinals = updatedMatches.filter(
+          (m) => m.stage === "Semi Final"
+        );
+        const allSemisComplete = semiFinals.every((m) => m.winner);
+        if (allSemisComplete && semiFinals.length === 2) {
+          const final = updatedMatches.find((m) => m.stage === "Final");
+          if (final && !final.team1) {
+            final.team1 =
+              semiFinals[0].team1._id === semiFinals[0].winner
+                ? semiFinals[0].team1
+                : semiFinals[0].team2;
+            final.team2 =
+              semiFinals[1].team1._id === semiFinals[1].winner
+                ? semiFinals[1].team1
+                : semiFinals[1].team2;
+            hasUpdates = true;
+          }
+        }
+      } else if (tournament.type === "tri-series") {
+        // Check if all league matches are complete
+        const leagueMatches = updatedMatches.filter(
+          (m) => m.stage === "League"
+        );
+        const allLeagueComplete = leagueMatches.every((m) => m.winner);
+
+        if (allLeagueComplete && pointsTable.length >= 2) {
+          const final = updatedMatches.find((m) => m.stage === "Final");
+          if (final && !final.team1) {
+            final.team1 = pointsTable[0].team;
+            final.team2 = pointsTable[1].team;
+            hasUpdates = true;
+          }
+        }
+      }
+
+      // Save updates if there are any
+      if (hasUpdates) {
+        await tournamentsAPI.updateKnockoutTeams(tournament._id, {
+          adminCode: adminCode,
+          matches: updatedMatches,
+        });
+        await loadData();
+      }
+    } catch (error) {
+      console.error("Failed to update knockout stages:", error);
+    }
+  };
+
+  const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
+    try {
+      await tournamentsAPI.updateMatch(tournamentId, matchId, {
+        adminCode: adminCode,
+        winner: winnerId,
+        team1Score: scores.team1Score,
+        team2Score: scores.team2Score,
+      });
+
+      // Reload tournament data
+      const [teamsRes, tournamentsRes] = await Promise.all([
+        teamsAPI.getAll(),
+        tournamentsAPI.getAll(),
+      ]);
+      setTeams(teamsRes.data);
+      setTournaments(tournamentsRes.data);
+
+      // Get the freshly updated tournament from the API response
+      const updatedTournament = tournamentsRes.data.find(
+        (t) => t._id === tournamentId
+      );
+      if (updatedTournament) {
+        await updateKnockoutStages(updatedTournament);
+      }
+
+      setEditingMatch(null);
+      setAdminCode("");
+    } catch (error) {
+      alert("Failed to update match result");
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <header className="bg-slate-800 border-b-4 border-red-600 sticky top-0 z-50 shadow-xl">
@@ -1847,25 +2169,65 @@ const SagedianCricketLeague = () => {
                                 Highest Scores
                               </h4>
                               <div className="space-y-2">
-                                {stats.highestScores.map((scoreData, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="bg-slate-900 p-4 rounded-lg flex justify-between items-center"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className="text-2xl font-bold text-emerald-400">
-                                        {scoreData.score}
-                                      </div>
-                                      <div className="text-sm text-slate-400">
-                                        {scoreData.match.team1?.name} vs{" "}
-                                        {scoreData.match.team2?.name}
+                                {stats.highestScores.map((scoreData, idx) => {
+                                  const team1Score =
+                                    scoreData.match.team1Score?.runs || 0;
+                                  const team2Score =
+                                    scoreData.match.team2Score?.runs || 0;
+                                  const highestScoringTeam =
+                                    team1Score > team2Score
+                                      ? scoreData.match.team1
+                                      : scoreData.match.team2;
+                                  const opposingTeam =
+                                    team1Score > team2Score
+                                      ? scoreData.match.team2
+                                      : scoreData.match.team1;
+                                  const highestScore = Math.max(
+                                    team1Score,
+                                    team2Score
+                                  );
+                                  const scoringTeamOvers =
+                                    team1Score > team2Score
+                                      ? scoreData.match.team1Score?.overs
+                                      : scoreData.match.team2Score?.overs;
+
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="bg-slate-900 p-4 rounded-lg"
+                                    >
+                                      <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-3">
+                                          <div className="text-2xl font-bold text-emerald-400">
+                                            {highestScore}/{scoringTeamOvers}
+                                          </div>
+                                          <div>
+                                            <div className="flex items-center gap-2">
+                                              {highestScoringTeam && (
+                                                <div
+                                                  className="w-5 h-5 rounded-full"
+                                                  style={{
+                                                    backgroundColor:
+                                                      highestScoringTeam.color,
+                                                  }}
+                                                />
+                                              )}
+                                              <span className="font-medium text-white">
+                                                {highestScoringTeam?.name}
+                                              </span>
+                                            </div>
+                                            <div className="text-xs text-slate-500 mt-1">
+                                              vs {opposingTeam?.name}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-sm text-slate-500">
+                                          {scoreData.match.stage}
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="text-sm text-slate-500">
-                                      {scoreData.match.stage}
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>

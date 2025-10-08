@@ -33,6 +33,8 @@ export const tournamentsAPI = {
   create: (tournament) => api.post("/tournaments", tournament),
   updateMatch: (tournamentId, matchId, data) =>
     api.put(`/tournaments/${tournamentId}/matches/${matchId}`, data),
+  updateKnockoutTeams: (tournamentId, data) =>
+    api.put(`/tournaments/${tournamentId}/knockout-teams`, data),
   delete: (id, adminCode) =>
     api.delete(`/tournaments/${id}`, { data: { adminCode } }),
   verifyAdmin: (id, adminCode) =>
