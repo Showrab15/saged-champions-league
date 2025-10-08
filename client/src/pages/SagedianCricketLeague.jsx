@@ -779,6 +779,491 @@ const SagedianCricketLeague = () => {
     );
   };
 
+  // const updateKnockoutStages = async (tournament) => {
+  //   try {
+  //     const pointsTable = calculatePointsTable(tournament);
+  //     const groupTables = calculateGroupPointsTables(tournament);
+  //     let updatedMatches = [...tournament.matches];
+  //     let hasUpdates = false;
+
+  //     if (tournament.type === "round-robin") {
+  //       // Check if all league matches are complete
+  //       const leagueMatches = updatedMatches.filter(
+  //         (m) => m.stage === "League"
+  //       );
+  //       const allLeagueComplete = leagueMatches.every((m) => m.winner);
+
+  //       if (allLeagueComplete && pointsTable.length >= 4) {
+  //         // Update playoff matches based on format
+  //         if (tournament.knockoutFormat === "ipl-style") {
+  //           // Qualifier 1: 1st vs 2nd
+  //           const q1 = updatedMatches.find((m) => m.stage === "Qualifier 1");
+  //           if (q1 && !q1.team1) {
+  //             q1.team1 = pointsTable[0].team;
+  //             q1.team2 = pointsTable[1].team;
+  //             hasUpdates = true;
+  //           }
+
+  //           // Eliminator: 3rd vs 4th
+  //           const elim = updatedMatches.find((m) => m.stage === "Eliminator");
+  //           if (elim && !elim.team1) {
+  //             elim.team1 = pointsTable[2].team;
+  //             elim.team2 = pointsTable[3].team;
+  //             hasUpdates = true;
+  //           }
+
+  //           // Qualifier 2: Loser of Q1 vs Winner of Eliminator
+  //           const q1Match = updatedMatches.find(
+  //             (m) => m.stage === "Qualifier 1"
+  //           );
+  //           const elimMatch = updatedMatches.find(
+  //             (m) => m.stage === "Eliminator"
+  //           );
+  //           if (q1Match?.winner && elimMatch?.winner) {
+  //             const q2 = updatedMatches.find((m) => m.stage === "Qualifier 2");
+  //             if (q2 && !q2.team1) {
+  //               const q1Loser =
+  //                 q1Match.winner === q1Match.team1._id
+  //                   ? q1Match.team2
+  //                   : q1Match.team1;
+  //               const elimWinner =
+  //                 elimMatch.winner === elimMatch.team1._id
+  //                   ? elimMatch.team1
+  //                   : elimMatch.team2;
+  //               q2.team1 = q1Loser;
+  //               q2.team2 = elimWinner;
+  //               hasUpdates = true;
+  //             }
+  //           }
+
+  //           // Final: Winner of Q1 vs Winner of Q2
+  //           const q2Match = updatedMatches.find(
+  //             (m) => m.stage === "Qualifier 2"
+  //           );
+  //           if (q1Match?.winner && q2Match?.winner) {
+  //             const final = updatedMatches.find((m) => m.stage === "Final");
+  //             if (final && !final.team1) {
+  //               const q1Winner =
+  //                 q1Match.winner === q1Match.team1._id
+  //                   ? q1Match.team1
+  //                   : q1Match.team2;
+  //               const q2Winner =
+  //                 q2Match.winner === q2Match.team1._id
+  //                   ? q2Match.team1
+  //                   : q2Match.team2;
+  //               final.team1 = q1Winner;
+  //               final.team2 = q2Winner;
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         } else if (tournament.knockoutFormat === "super-four-mini") {
+  //           // Top 4 teams play mini round-robin
+  //           const superFourMatches = updatedMatches.filter(
+  //             (m) => m.stage === "Super Four"
+  //           );
+  //           if (superFourMatches.length > 0 && !superFourMatches[0].team1) {
+  //             const top4 = pointsTable.slice(0, 4);
+  //             superFourMatches[0].team1 = top4[0].team;
+  //             superFourMatches[0].team2 = top4[1].team;
+  //             superFourMatches[1].team1 = top4[0].team;
+  //             superFourMatches[1].team2 = top4[2].team;
+  //             superFourMatches[2].team1 = top4[1].team;
+  //             superFourMatches[2].team2 = top4[2].team;
+  //             hasUpdates = true;
+  //           }
+
+  //           // Check if Super Four is complete and update final
+  //           const allSuperFourComplete = superFourMatches.every(
+  //             (m) => m.winner
+  //           );
+  //           if (allSuperFourComplete) {
+  //             const superFourTable = calculatePointsTable({
+  //               ...tournament,
+  //               matches: superFourMatches,
+  //               teams: pointsTable.slice(0, 4).map((e) => e.team),
+  //             });
+  //             const final = updatedMatches.find((m) => m.stage === "Final");
+  //             if (final && !final.team1 && superFourTable.length >= 2) {
+  //               final.team1 = superFourTable[0].team;
+  //               final.team2 = superFourTable[1].team;
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         } else {
+  //           // Standard semi-finals: 1 vs 4, 2 vs 3
+  //           const semiFinals = updatedMatches.filter(
+  //             (m) => m.stage === "Semi Final"
+  //           );
+  //           if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+  //             semiFinals[0].team1 = pointsTable[0].team;
+  //             semiFinals[0].team2 = pointsTable[3].team;
+  //             semiFinals[1].team1 = pointsTable[1].team;
+  //             semiFinals[1].team2 = pointsTable[2].team;
+  //             hasUpdates = true;
+  //           }
+  //         }
+
+  //         // Update Quarter Finals if needed
+  //         if (
+  //           tournament.knockoutStage === "quarter-final" &&
+  //           pointsTable.length >= 8
+  //         ) {
+  //           const quarterFinals = updatedMatches.filter(
+  //             (m) => m.stage === "Quarter Final"
+  //           );
+  //           if (quarterFinals.length >= 4 && !quarterFinals[0].team1) {
+  //             quarterFinals[0].team1 = pointsTable[0].team;
+  //             quarterFinals[0].team2 = pointsTable[7].team;
+  //             quarterFinals[1].team1 = pointsTable[1].team;
+  //             quarterFinals[1].team2 = pointsTable[6].team;
+  //             quarterFinals[2].team1 = pointsTable[2].team;
+  //             quarterFinals[2].team2 = pointsTable[5].team;
+  //             quarterFinals[3].team1 = pointsTable[3].team;
+  //             quarterFinals[3].team2 = pointsTable[4].team;
+  //             hasUpdates = true;
+  //           }
+
+  //           // Update semis from quarters
+  //           const allQFComplete = quarterFinals.every((m) => m.winner);
+  //           if (allQFComplete) {
+  //             const semiFinals = updatedMatches.filter(
+  //               (m) => m.stage === "Semi Final"
+  //             );
+  //             if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+  //               semiFinals[0].team1 =
+  //                 quarterFinals[0].winner === quarterFinals[0].team1._id
+  //                   ? quarterFinals[0].team1
+  //                   : quarterFinals[0].team2;
+  //               semiFinals[0].team2 =
+  //                 quarterFinals[1].winner === quarterFinals[1].team1._id
+  //                   ? quarterFinals[1].team1
+  //                   : quarterFinals[1].team2;
+  //               semiFinals[1].team1 =
+  //                 quarterFinals[2].winner === quarterFinals[2].team1._id
+  //                   ? quarterFinals[2].team1
+  //                   : quarterFinals[2].team2;
+  //               semiFinals[1].team2 =
+  //                 quarterFinals[3].winner === quarterFinals[3].team1._id
+  //                   ? quarterFinals[3].team1
+  //                   : quarterFinals[3].team2;
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       // Update final based on semi-final results (for standard/super-four)
+  //       if (tournament.knockoutFormat !== "ipl-style") {
+  //         const semiFinals = updatedMatches.filter(
+  //           (m) => m.stage === "Semi Final"
+  //         );
+  //         const allSemisComplete = semiFinals.every((m) => m.winner);
+  //         if (allSemisComplete && semiFinals.length === 2) {
+  //           const final = updatedMatches.find((m) => m.stage === "Final");
+  //           if (final && !final.team1) {
+  //             final.team1 =
+  //               semiFinals[0].team1._id === semiFinals[0].winner
+  //                 ? semiFinals[0].team1
+  //                 : semiFinals[0].team2;
+  //             final.team2 =
+  //               semiFinals[1].team1._id === semiFinals[1].winner
+  //                 ? semiFinals[1].team1
+  //                 : semiFinals[1].team2;
+  //             hasUpdates = true;
+  //           }
+  //         }
+  //       }
+  //     } else if (tournament.type === "group-stage" && groupTables) {
+  //       // Check if all group matches are complete
+  //       const groupMatches = updatedMatches.filter(
+  //         (m) => m.group && !m.group.includes("Super")
+  //       );
+  //       const allGroupsComplete = groupMatches.every((m) => m.winner);
+
+  //       if (allGroupsComplete) {
+  //         const qualifiers = [];
+  //         Object.values(groupTables).forEach((table) => {
+  //           // Get top 2 from each group - these are full team objects
+  //           qualifiers.push(table[0].team, table[1].team);
+  //         });
+
+  //         // Super Eight stage
+  //         if (
+  //           tournament.knockoutStage === "super-eight" &&
+  //           qualifiers.length >= 8
+  //         ) {
+  //           const superEightMatches = updatedMatches.filter(
+  //             (m) => m.group && m.group.includes("Super Eight")
+  //           );
+
+  //           if (superEightMatches.length > 0 && !superEightMatches[0].team1) {
+  //             // Distribute qualified teams into Super Eight groups
+  //             const group1Teams = [
+  //               qualifiers[0],
+  //               qualifiers[3],
+  //               qualifiers[4],
+  //               qualifiers[7],
+  //             ];
+  //             const group2Teams = [
+  //               qualifiers[1],
+  //               qualifiers[2],
+  //               qualifiers[5],
+  //               qualifiers[6],
+  //             ];
+
+  //             // Generate matches for Super Eight Group 1
+  //             let matchIndex = 0;
+  //             for (let i = 0; i < group1Teams.length; i++) {
+  //               for (let j = i + 1; j < group1Teams.length; j++) {
+  //                 if (superEightMatches[matchIndex]) {
+  //                   superEightMatches[matchIndex].team1 = group1Teams[i];
+  //                   superEightMatches[matchIndex].team2 = group1Teams[j];
+  //                   superEightMatches[matchIndex].group = "Super Eight Group 1";
+  //                   matchIndex++;
+  //                 }
+  //               }
+  //             }
+
+  //             // Generate matches for Super Eight Group 2
+  //             for (let i = 0; i < group2Teams.length; i++) {
+  //               for (let j = i + 1; j < group2Teams.length; j++) {
+  //                 if (superEightMatches[matchIndex]) {
+  //                   superEightMatches[matchIndex].team1 = group2Teams[i];
+  //                   superEightMatches[matchIndex].team2 = group2Teams[j];
+  //                   superEightMatches[matchIndex].group = "Super Eight Group 2";
+  //                   matchIndex++;
+  //                 }
+  //               }
+  //             }
+  //             hasUpdates = true;
+  //           }
+
+  //           // Check if Super Eight is complete and update semis
+  //           const allSuperEightComplete = superEightMatches.every(
+  //             (m) => m.winner
+  //           );
+  //           if (allSuperEightComplete) {
+  //             // Calculate Super Eight group tables
+  //             const superEightTables = {
+  //               "Super Eight Group 1": {},
+  //               "Super Eight Group 2": {},
+  //             };
+
+  //             superEightMatches.forEach((match) => {
+  //               if (!superEightTables[match.group]) return;
+
+  //               const table = superEightTables[match.group];
+
+  //               if (!table[match.team1._id]) {
+  //                 table[match.team1._id] = {
+  //                   team: match.team1,
+  //                   played: 0,
+  //                   won: 0,
+  //                   lost: 0,
+  //                   points: 0,
+  //                   nrr: 0,
+  //                 };
+  //               }
+  //               if (!table[match.team2._id]) {
+  //                 table[match.team2._id] = {
+  //                   team: match.team2,
+  //                   played: 0,
+  //                   won: 0,
+  //                   lost: 0,
+  //                   points: 0,
+  //                   nrr: 0,
+  //                 };
+  //               }
+
+  //               table[match.team1._id].played++;
+  //               table[match.team2._id].played++;
+
+  //               if (match.winner === match.team1._id) {
+  //                 table[match.team1._id].won++;
+  //                 table[match.team1._id].points += 2;
+  //                 table[match.team2._id].lost++;
+  //               } else {
+  //                 table[match.team2._id].won++;
+  //                 table[match.team2._id].points += 2;
+  //                 table[match.team1._id].lost++;
+  //               }
+  //             });
+
+  //             // Sort tables and get top 2 from each
+  //             const superEightQualifiers = [];
+  //             Object.keys(superEightTables).forEach((groupName) => {
+  //               const sorted = Object.values(superEightTables[groupName]).sort(
+  //                 (a, b) => {
+  //                   if (b.points !== a.points) return b.points - a.points;
+  //                   return parseFloat(b.nrr) - parseFloat(a.nrr);
+  //                 }
+  //               );
+  //               superEightQualifiers.push(sorted[0].team, sorted[1].team);
+  //             });
+
+  //             // Update semis
+  //             const semiFinals = updatedMatches.filter(
+  //               (m) => m.stage === "Semi Final"
+  //             );
+  //             if (
+  //               semiFinals.length >= 2 &&
+  //               !semiFinals[0].team1 &&
+  //               superEightQualifiers.length >= 4
+  //             ) {
+  //               semiFinals[0].team1 = superEightQualifiers[0];
+  //               semiFinals[0].team2 = superEightQualifiers[3];
+  //               semiFinals[1].team1 = superEightQualifiers[1];
+  //               semiFinals[1].team2 = superEightQualifiers[2];
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         } else if (
+  //           tournament.knockoutStage === "super-four" &&
+  //           qualifiers.length >= 4
+  //         ) {
+  //           // Super Four matches
+  //           const superFourMatches = updatedMatches.filter(
+  //             (m) => m.stage === "Super Four"
+  //           );
+  //           if (superFourMatches.length >= 3 && !superFourMatches[0].team1) {
+  //             const top4 = qualifiers.slice(0, 4);
+  //             superFourMatches[0].team1 = top4[0];
+  //             superFourMatches[0].team2 = top4[1];
+  //             superFourMatches[1].team1 = top4[0];
+  //             superFourMatches[1].team2 = top4[2];
+  //             superFourMatches[2].team1 = top4[1];
+  //             superFourMatches[2].team2 = top4[2];
+  //             hasUpdates = true;
+  //           }
+
+  //           // Update final from Super Four
+  //           const allSuperFourComplete = superFourMatches.every(
+  //             (m) => m.winner
+  //           );
+  //           if (allSuperFourComplete) {
+  //             const superFourTable = calculatePointsTable({
+  //               ...tournament,
+  //               matches: superFourMatches,
+  //               teams: qualifiers.slice(0, 4),
+  //             });
+  //             const final = updatedMatches.find((m) => m.stage === "Final");
+  //             if (final && !final.team1 && superFourTable.length >= 2) {
+  //               final.team1 = superFourTable[0].team;
+  //               final.team2 = superFourTable[1].team;
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         } else if (
+  //           tournament.knockoutStage === "semi-final" &&
+  //           qualifiers.length >= 4
+  //         ) {
+  //           const semiFinals = updatedMatches.filter(
+  //             (m) => m.stage === "Semi Final"
+  //           );
+  //           if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+  //             semiFinals[0].team1 = qualifiers[0];
+  //             semiFinals[0].team2 = qualifiers[3];
+  //             semiFinals[1].team1 = qualifiers[1];
+  //             semiFinals[1].team2 = qualifiers[2];
+  //             hasUpdates = true;
+  //           }
+  //         } else if (
+  //           tournament.knockoutStage === "quarter-final" &&
+  //           qualifiers.length >= 8
+  //         ) {
+  //           const quarterFinals = updatedMatches.filter(
+  //             (m) => m.stage === "Quarter Final"
+  //           );
+  //           if (quarterFinals.length >= 4 && !quarterFinals[0].team1) {
+  //             quarterFinals[0].team1 = qualifiers[0];
+  //             quarterFinals[0].team2 = qualifiers[7];
+  //             quarterFinals[1].team1 = qualifiers[1];
+  //             quarterFinals[1].team2 = qualifiers[6];
+  //             quarterFinals[2].team1 = qualifiers[2];
+  //             quarterFinals[2].team2 = qualifiers[5];
+  //             quarterFinals[3].team1 = qualifiers[3];
+  //             quarterFinals[3].team2 = qualifiers[4];
+  //             hasUpdates = true;
+  //           }
+
+  //           // Update semis from quarters
+  //           const allQFComplete = quarterFinals.every((m) => m.winner);
+  //           if (allQFComplete) {
+  //             const semiFinals = updatedMatches.filter(
+  //               (m) => m.stage === "Semi Final"
+  //             );
+  //             if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+  //               semiFinals[0].team1 =
+  //                 quarterFinals[0].winner === quarterFinals[0].team1._id
+  //                   ? quarterFinals[0].team1
+  //                   : quarterFinals[0].team2;
+  //               semiFinals[0].team2 =
+  //                 quarterFinals[1].winner === quarterFinals[1].team1._id
+  //                   ? quarterFinals[1].team1
+  //                   : quarterFinals[1].team2;
+  //               semiFinals[1].team1 =
+  //                 quarterFinals[2].winner === quarterFinals[2].team1._id
+  //                   ? quarterFinals[2].team1
+  //                   : quarterFinals[2].team2;
+  //               semiFinals[1].team2 =
+  //                 quarterFinals[3].winner === quarterFinals[3].team1._id
+  //                   ? quarterFinals[3].team1
+  //                   : quarterFinals[3].team2;
+  //               hasUpdates = true;
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       // Update final
+  //       const semiFinals = updatedMatches.filter(
+  //         (m) => m.stage === "Semi Final"
+  //       );
+  //       const allSemisComplete = semiFinals.every((m) => m.winner);
+  //       if (allSemisComplete && semiFinals.length === 2) {
+  //         const final = updatedMatches.find((m) => m.stage === "Final");
+  //         if (final && !final.team1) {
+  //           final.team1 =
+  //             semiFinals[0].team1._id === semiFinals[0].winner
+  //               ? semiFinals[0].team1
+  //               : semiFinals[0].team2;
+  //           final.team2 =
+  //             semiFinals[1].team1._id === semiFinals[1].winner
+  //               ? semiFinals[1].team1
+  //               : semiFinals[1].team2;
+  //           hasUpdates = true;
+  //         }
+  //       }
+  //     } else if (tournament.type === "tri-series") {
+  //       // Check if all league matches are complete
+  //       const leagueMatches = updatedMatches.filter(
+  //         (m) => m.stage === "League"
+  //       );
+  //       const allLeagueComplete = leagueMatches.every((m) => m.winner);
+
+  //       if (allLeagueComplete && pointsTable.length >= 2) {
+  //         const final = updatedMatches.find((m) => m.stage === "Final");
+  //         if (final && !final.team1) {
+  //           final.team1 = pointsTable[0].team;
+  //           final.team2 = pointsTable[1].team;
+  //           hasUpdates = true;
+  //         }
+  //       }
+  //     }
+
+  //     // Save updates if there are any
+  //     if (hasUpdates) {
+  //       await tournamentsAPI.updateKnockoutTeams(tournament._id, {
+  //         adminCode: adminCode,
+  //         matches: updatedMatches,
+  //       });
+  //       await loadData();
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to update knockout stages:", error);
+  //   }
+  // };
+
   const updateKnockoutStages = async (tournament) => {
     try {
       const pointsTable = calculatePointsTable(tournament);
@@ -842,7 +1327,7 @@ const SagedianCricketLeague = () => {
             );
             if (q1Match?.winner && q2Match?.winner) {
               const final = updatedMatches.find((m) => m.stage === "Final");
-              if (final && !final.team1) {
+              if (final && (!final.team1 || !final.winner)) {
                 const q1Winner =
                   q1Match.winner === q1Match.team1._id
                     ? q1Match.team1
@@ -883,7 +1368,11 @@ const SagedianCricketLeague = () => {
                 teams: pointsTable.slice(0, 4).map((e) => e.team),
               });
               const final = updatedMatches.find((m) => m.stage === "Final");
-              if (final && !final.team1 && superFourTable.length >= 2) {
+              if (
+                final &&
+                (!final.team1 || !final.winner) &&
+                superFourTable.length >= 2
+              ) {
                 final.team1 = superFourTable[0].team;
                 final.team2 = superFourTable[1].team;
                 hasUpdates = true;
@@ -902,6 +1391,54 @@ const SagedianCricketLeague = () => {
               hasUpdates = true;
             }
           }
+
+          // Update Quarter Finals if needed
+          if (
+            tournament.knockoutStage === "quarter-final" &&
+            pointsTable.length >= 8
+          ) {
+            const quarterFinals = updatedMatches.filter(
+              (m) => m.stage === "Quarter Final"
+            );
+            if (quarterFinals.length >= 4 && !quarterFinals[0].team1) {
+              quarterFinals[0].team1 = pointsTable[0].team;
+              quarterFinals[0].team2 = pointsTable[7].team;
+              quarterFinals[1].team1 = pointsTable[1].team;
+              quarterFinals[1].team2 = pointsTable[6].team;
+              quarterFinals[2].team1 = pointsTable[2].team;
+              quarterFinals[2].team2 = pointsTable[5].team;
+              quarterFinals[3].team1 = pointsTable[3].team;
+              quarterFinals[3].team2 = pointsTable[4].team;
+              hasUpdates = true;
+            }
+
+            // Update semis from quarters
+            const allQFComplete = quarterFinals.every((m) => m.winner);
+            if (allQFComplete) {
+              const semiFinals = updatedMatches.filter(
+                (m) => m.stage === "Semi Final"
+              );
+              if (semiFinals.length >= 2 && !semiFinals[0].team1) {
+                semiFinals[0].team1 =
+                  quarterFinals[0].winner === quarterFinals[0].team1._id
+                    ? quarterFinals[0].team1
+                    : quarterFinals[0].team2;
+                semiFinals[0].team2 =
+                  quarterFinals[1].winner === quarterFinals[1].team1._id
+                    ? quarterFinals[1].team1
+                    : quarterFinals[1].team2;
+                semiFinals[1].team1 =
+                  quarterFinals[2].winner === quarterFinals[2].team1._id
+                    ? quarterFinals[2].team1
+                    : quarterFinals[2].team2;
+                semiFinals[1].team2 =
+                  quarterFinals[3].winner === quarterFinals[3].team1._id
+                    ? quarterFinals[3].team1
+                    : quarterFinals[3].team2;
+                hasUpdates = true;
+              }
+            }
+          }
         }
 
         // Update final based on semi-final results (for standard/super-four)
@@ -912,13 +1449,13 @@ const SagedianCricketLeague = () => {
           const allSemisComplete = semiFinals.every((m) => m.winner);
           if (allSemisComplete && semiFinals.length === 2) {
             const final = updatedMatches.find((m) => m.stage === "Final");
-            if (final && !final.team1) {
+            if (final && (!final.team1 || !final.winner)) {
               final.team1 =
-                semiFinals[0].team1._id === semiFinals[0].winner
+                semiFinals[0].winner === semiFinals[0].team1?._id
                   ? semiFinals[0].team1
                   : semiFinals[0].team2;
               final.team2 =
-                semiFinals[1].team1._id === semiFinals[1].winner
+                semiFinals[1].winner === semiFinals[1].team1?._id
                   ? semiFinals[1].team1
                   : semiFinals[1].team2;
               hasUpdates = true;
@@ -935,18 +1472,188 @@ const SagedianCricketLeague = () => {
         if (allGroupsComplete) {
           const qualifiers = [];
           Object.values(groupTables).forEach((table) => {
-            qualifiers.push(table[0].team, table[1].team); // Top 2 from each group
+            // Get top 2 from each group - these are full team objects
+            qualifiers.push(table[0].team, table[1].team);
           });
 
-          if (tournament.knockoutStage === "semi-final") {
+          // Super Eight stage
+          if (
+            tournament.knockoutStage === "super-eight" &&
+            qualifiers.length >= 8
+          ) {
+            const superEightMatches = updatedMatches.filter(
+              (m) => m.group && m.group.includes("Super Eight")
+            );
+
+            if (superEightMatches.length > 0 && !superEightMatches[0].team1) {
+              // Distribute qualified teams into Super Eight groups
+              const group1Teams = [
+                qualifiers[0],
+                qualifiers[3],
+                qualifiers[4],
+                qualifiers[7],
+              ];
+              const group2Teams = [
+                qualifiers[1],
+                qualifiers[2],
+                qualifiers[5],
+                qualifiers[6],
+              ];
+
+              // Generate matches for Super Eight Group 1
+              let matchIndex = 0;
+              for (let i = 0; i < group1Teams.length; i++) {
+                for (let j = i + 1; j < group1Teams.length; j++) {
+                  if (superEightMatches[matchIndex]) {
+                    superEightMatches[matchIndex].team1 = group1Teams[i];
+                    superEightMatches[matchIndex].team2 = group1Teams[j];
+                    superEightMatches[matchIndex].group = "Super Eight Group 1";
+                    matchIndex++;
+                  }
+                }
+              }
+
+              // Generate matches for Super Eight Group 2
+              for (let i = 0; i < group2Teams.length; i++) {
+                for (let j = i + 1; j < group2Teams.length; j++) {
+                  if (superEightMatches[matchIndex]) {
+                    superEightMatches[matchIndex].team1 = group2Teams[i];
+                    superEightMatches[matchIndex].team2 = group2Teams[j];
+                    superEightMatches[matchIndex].group = "Super Eight Group 2";
+                    matchIndex++;
+                  }
+                }
+              }
+              hasUpdates = true;
+            }
+
+            // Check if Super Eight is complete and update semis
+            const allSuperEightComplete = superEightMatches.every(
+              (m) => m.winner
+            );
+            if (allSuperEightComplete) {
+              // Calculate Super Eight group tables
+              const superEightTables = {
+                "Super Eight Group 1": {},
+                "Super Eight Group 2": {},
+              };
+
+              superEightMatches.forEach((match) => {
+                if (!superEightTables[match.group]) return;
+
+                const table = superEightTables[match.group];
+
+                if (!table[match.team1._id]) {
+                  table[match.team1._id] = {
+                    team: match.team1,
+                    played: 0,
+                    won: 0,
+                    lost: 0,
+                    points: 0,
+                    nrr: 0,
+                  };
+                }
+                if (!table[match.team2._id]) {
+                  table[match.team2._id] = {
+                    team: match.team2,
+                    played: 0,
+                    won: 0,
+                    lost: 0,
+                    points: 0,
+                    nrr: 0,
+                  };
+                }
+
+                table[match.team1._id].played++;
+                table[match.team2._id].played++;
+
+                if (match.winner === match.team1._id) {
+                  table[match.team1._id].won++;
+                  table[match.team1._id].points += 2;
+                  table[match.team2._id].lost++;
+                } else {
+                  table[match.team2._id].won++;
+                  table[match.team2._id].points += 2;
+                  table[match.team1._id].lost++;
+                }
+              });
+
+              // Sort tables and get top 2 from each
+              const superEightQualifiers = [];
+              Object.keys(superEightTables).forEach((groupName) => {
+                const sorted = Object.values(superEightTables[groupName]).sort(
+                  (a, b) => {
+                    if (b.points !== a.points) return b.points - a.points;
+                    return parseFloat(b.nrr) - parseFloat(a.nrr);
+                  }
+                );
+                superEightQualifiers.push(sorted[0].team, sorted[1].team);
+              });
+
+              // Update semis
+              const semiFinals = updatedMatches.filter(
+                (m) => m.stage === "Semi Final"
+              );
+              if (
+                semiFinals.length >= 2 &&
+                !semiFinals[0].team1 &&
+                superEightQualifiers.length >= 4
+              ) {
+                semiFinals[0].team1 = superEightQualifiers[0];
+                semiFinals[0].team2 = superEightQualifiers[3];
+                semiFinals[1].team1 = superEightQualifiers[1];
+                semiFinals[1].team2 = superEightQualifiers[2];
+                hasUpdates = true;
+              }
+            }
+          } else if (
+            tournament.knockoutStage === "super-four" &&
+            qualifiers.length >= 4
+          ) {
+            // Super Four matches
+            const superFourMatches = updatedMatches.filter(
+              (m) => m.stage === "Super Four"
+            );
+            if (superFourMatches.length >= 3 && !superFourMatches[0].team1) {
+              const top4 = qualifiers.slice(0, 4);
+              superFourMatches[0].team1 = top4[0];
+              superFourMatches[0].team2 = top4[1];
+              superFourMatches[1].team1 = top4[0];
+              superFourMatches[1].team2 = top4[2];
+              superFourMatches[2].team1 = top4[1];
+              superFourMatches[2].team2 = top4[2];
+              hasUpdates = true;
+            }
+
+            // Update final from Super Four
+            const allSuperFourComplete = superFourMatches.every(
+              (m) => m.winner
+            );
+            if (allSuperFourComplete) {
+              const superFourTable = calculatePointsTable({
+                ...tournament,
+                matches: superFourMatches,
+                teams: qualifiers.slice(0, 4),
+              });
+              const final = updatedMatches.find((m) => m.stage === "Final");
+              if (
+                final &&
+                (!final.team1 || !final.winner) &&
+                superFourTable.length >= 2
+              ) {
+                final.team1 = superFourTable[0].team;
+                final.team2 = superFourTable[1].team;
+                hasUpdates = true;
+              }
+            }
+          } else if (
+            tournament.knockoutStage === "semi-final" &&
+            qualifiers.length >= 4
+          ) {
             const semiFinals = updatedMatches.filter(
               (m) => m.stage === "Semi Final"
             );
-            if (
-              semiFinals.length >= 2 &&
-              !semiFinals[0].team1 &&
-              qualifiers.length >= 4
-            ) {
+            if (semiFinals.length >= 2 && !semiFinals[0].team1) {
               semiFinals[0].team1 = qualifiers[0];
               semiFinals[0].team2 = qualifiers[3];
               semiFinals[1].team1 = qualifiers[1];
@@ -1001,20 +1708,20 @@ const SagedianCricketLeague = () => {
           }
         }
 
-        // Update final
+        // Update final for group stage tournaments
         const semiFinals = updatedMatches.filter(
           (m) => m.stage === "Semi Final"
         );
         const allSemisComplete = semiFinals.every((m) => m.winner);
         if (allSemisComplete && semiFinals.length === 2) {
           const final = updatedMatches.find((m) => m.stage === "Final");
-          if (final && !final.team1) {
+          if (final && (!final.team1 || !final.winner)) {
             final.team1 =
-              semiFinals[0].team1._id === semiFinals[0].winner
+              semiFinals[0].winner === semiFinals[0].team1?._id
                 ? semiFinals[0].team1
                 : semiFinals[0].team2;
             final.team2 =
-              semiFinals[1].team1._id === semiFinals[1].winner
+              semiFinals[1].winner === semiFinals[1].team1?._id
                 ? semiFinals[1].team1
                 : semiFinals[1].team2;
             hasUpdates = true;
@@ -1029,7 +1736,7 @@ const SagedianCricketLeague = () => {
 
         if (allLeagueComplete && pointsTable.length >= 2) {
           const final = updatedMatches.find((m) => m.stage === "Final");
-          if (final && !final.team1) {
+          if (final && (!final.team1 || !final.winner)) {
             final.team1 = pointsTable[0].team;
             final.team2 = pointsTable[1].team;
             hasUpdates = true;
@@ -1081,6 +1788,7 @@ const SagedianCricketLeague = () => {
       alert("Failed to update match result");
     }
   };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <header className="bg-slate-800 border-b-4 border-red-600 sticky top-0 z-50 shadow-xl">
@@ -2011,8 +2719,8 @@ const SagedianCricketLeague = () => {
                                           </div>
                                           {match.winner && (
                                             <span className="font-bold">
-                                              {match.team1Score.runs} (
-                                              {match.team1Score.overs} over)
+                                              {match.team2Score.runs} (
+                                              {match.team2Score.overs} over)
                                             </span>
                                           )}
                                         </div>
@@ -2028,22 +2736,30 @@ const SagedianCricketLeague = () => {
                                             : "TBD"}
                                         </div>
                                       )}
+
                                       {adminCode ===
-                                        selectedTournament.adminCode &&
-                                        match.team1 &&
-                                        match.team2 && (
-                                          <button
-                                            onClick={() =>
-                                              setEditingMatch(match._id)
-                                            }
-                                            className="w-full bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-                                          >
-                                            <Edit2 size={16} />{" "}
-                                            {match.winner
-                                              ? "Edit Result"
-                                              : "Add Result"}
-                                          </button>
-                                        )}
+                                        selectedTournament.adminCode && (
+                                        <div className="space-y-2">
+                                          {match.team1 && match.team2 ? (
+                                            <button
+                                              onClick={() =>
+                                                setEditingMatch(match._id)
+                                              }
+                                              className="w-full bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                                            >
+                                              <Edit2 size={16} />{" "}
+                                              {match.winner
+                                                ? "Edit Result"
+                                                : "Add Result"}
+                                            </button>
+                                          ) : (
+                                            <div className="w-full bg-slate-600 px-4 py-2 rounded text-center text-sm text-slate-300">
+                                              Waiting for previous matches to
+                                              complete
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
