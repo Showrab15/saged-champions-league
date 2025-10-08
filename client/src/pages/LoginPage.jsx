@@ -18,7 +18,7 @@ const LoginPage = () => {
 
     try {
       await signInWithPopup(auth, provider);
-      navigate("/admin"); // redirect to admin after successful login
+      navigate("/"); // redirect to admin after successful login
     } catch (err) {
       setError(err.message);
     } finally {

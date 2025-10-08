@@ -19,9 +19,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { setUserId, teamsAPI, tournamentsAPI } from "../services/api";
-
 const SagedianCricketLeague = () => {
   const [currentView, setCurrentView] = useState("home");
   const [tournaments, setTournaments] = useState([]);
@@ -45,7 +45,7 @@ const SagedianCricketLeague = () => {
   const [hasGroupStage, setHasGroupStage] = useState(true);
   const [currentTab, setCurrentTab] = useState("matches");
 
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -816,6 +816,20 @@ const SagedianCricketLeague = () => {
               >
                 <Trophy size={16} /> Tournaments
               </button>
+              {currentUser ? (
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link to="/login">
+                  <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
+                    Login
+                  </button>
+                </Link>
+              )}
             </nav>
           </div>
         </div>

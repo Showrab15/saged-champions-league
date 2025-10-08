@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://cricket-league-backend.vercel.app"; // Change for production
+const API_URL = "http://localhost:5000"; // Change for production
 
 // Create axios instance
 const api = axios.create({
