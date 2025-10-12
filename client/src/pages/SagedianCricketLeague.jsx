@@ -1392,6 +1392,10 @@ const SagedianCricketLeague = () => {
   };
 
   const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
+    if (!currentUser) {
+      alert("Please login to update match results");
+      return;
+    }
     try {
       await tournamentsAPI.updateMatch(tournamentId, matchId, {
         adminCode: adminCode,
