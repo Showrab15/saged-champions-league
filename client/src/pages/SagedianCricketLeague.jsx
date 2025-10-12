@@ -1717,9 +1717,7 @@ const SagedianCricketLeague = () => {
                     >
                       <option value="final">Final Only</option>
                       <option value="semi-final">Semi Finals + Final</option>
-                      <option value="super-four">
-                        Super Four + Semi Finals + Final
-                      </option>
+                      <option value="super-four">Super Four + Final</option>
                       {selectedTeams.length >= 10 && (
                         <option value="super-eight">
                           Super Eight + Semi Finals + Final
