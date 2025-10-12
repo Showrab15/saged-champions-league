@@ -157,6 +157,10 @@ const SagedianCricketLeague = () => {
   // };
 
   const deleteTournament = async (_id, code) => {
+    if (!currentUser) {
+      alert("Please login to delete tournaments");
+      return;
+    }
     try {
       await tournamentsAPI.delete(_id, code);
       setTournaments(tournaments.filter((t) => t._id !== _id));
@@ -201,6 +205,10 @@ const SagedianCricketLeague = () => {
   };
 
   const removeTeam = async (_id) => {
+    if (!currentUser) {
+      alert("Please login to delete teams");
+      return;
+    }
     try {
       await teamsAPI.delete(_id); // 🔥 make actual delete request to backend
       setTeams(teams.filter((team) => team._id !== _id)); // then update state
