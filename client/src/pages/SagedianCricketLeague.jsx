@@ -1882,7 +1882,13 @@ const SagedianCricketLeague = () => {
             </div>
           </div>
         )}
-
+        {/* {!currentUser && currentView === "tournaments" && (
+  <div className="bg-blue-900/50 border-b-2 border-blue-600 py-2">
+    <div className="max-w-7xl mx-auto px-4 text-center text-sm text-blue-200">
+      👀 Viewing in public mode. <Link to="/login" className="underline font-bold">Login</Link> to create or manage tournaments.
+    </div>
+  </div>
+)} */}
         {currentView === "tournaments" && (
           <div className="space-y-6 animate-slide-up">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
