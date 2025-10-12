@@ -100,6 +100,10 @@ const SagedianCricketLeague = () => {
   };
 
   const createTournament = async () => {
+    if (!currentUser) {
+      alert("Please login to create tournaments");
+      return;
+    }
     if (!tournamentName.trim() || selectedTeams.length < 2) return;
 
     try {
