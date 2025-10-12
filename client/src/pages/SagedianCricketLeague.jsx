@@ -841,6 +841,9 @@ const SagedianCricketLeague = () => {
   };
 
   const updateKnockoutStages = async (tournament) => {
+    if (!currentUser) {
+      return; // Silently return if not logged in
+    }
     try {
       const pointsTable = calculatePointsTable(tournament);
       const groupTables = calculateGroupPointsTables(tournament);
