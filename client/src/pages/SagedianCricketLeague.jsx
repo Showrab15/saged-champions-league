@@ -48,13 +48,22 @@ const SagedianCricketLeague = () => {
   const { currentUser, logout } = useAuth();
   const [loading, setLoading] = useState(true);
 
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     setUserId(currentUser.uid);
+  //     loadData();
+  //   }
+  // }, [currentUser]);
+
+  // replaced with down code ------>
+
   useEffect(() => {
+    // Load data on mount - no auth required for viewing
+    loadData();
     if (currentUser) {
       setUserId(currentUser.uid);
-      loadData();
     }
   }, [currentUser]);
-
   const loadData = async () => {
     try {
       setLoading(true);
