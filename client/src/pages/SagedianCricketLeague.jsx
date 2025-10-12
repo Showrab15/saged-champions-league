@@ -81,6 +81,10 @@ const SagedianCricketLeague = () => {
   };
 
   const addTeam = async () => {
+    if (!currentUser) {
+      alert("Please login to add teams");
+      return;
+    }
     if (newTeamName.trim()) {
       try {
         const response = await teamsAPI.create({
