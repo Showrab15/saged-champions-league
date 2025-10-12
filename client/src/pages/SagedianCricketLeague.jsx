@@ -349,8 +349,25 @@ const SagedianCricketLeague = () => {
         }
       }
 
+      // if (knockoutStage === "super-four") {
+      //   for (let i = 0; i < 3; i++) {
+      //     matches.push({
+      //       _id: `match-${matches.length}`,
+      //       team1: null,
+      //       team2: null,
+      //       winner: null,
+      //       stage: "Super Four",
+      //       team1Score: { runs: 0, overs: 0 },
+      //       team2Score: { runs: 0, overs: 0 },
+      //     });
+      //   }
+      // }
+
+      // Replaced with down->
+
       if (knockoutStage === "super-four") {
-        for (let i = 0; i < 3; i++) {
+        // Super Four: Top 4 teams play round-robin (6 matches total)
+        for (let i = 0; i < 6; i++) {
           matches.push({
             _id: `match-${matches.length}`,
             team1: null,
@@ -362,7 +379,6 @@ const SagedianCricketLeague = () => {
           });
         }
       }
-
       if (knockoutStage === "quarter-final") {
         for (let i = 0; i < 4; i++) {
           matches.push({
@@ -377,9 +393,29 @@ const SagedianCricketLeague = () => {
         }
       }
 
+      // if (
+      //   knockoutStage === "semi-final" ||
+      //   knockoutStage === "super-four" ||
+      //   knockoutStage === "super-eight" ||
+      //   knockoutStage === "quarter-final"
+      // ) {
+      //   for (let i = 0; i < 2; i++) {
+      //     matches.push({
+      //       _id: `match-${matches.length}`,
+      //       team1: null,
+      //       team2: null,
+      //       winner: null,
+      //       stage: "Semi Final",
+      //       team1Score: { runs: 0, overs: 0 },
+      //       team2Score: { runs: 0, overs: 0 },
+      //     });
+      //   }
+      // }
+
+      // Replaced with down code --->
+      // Only add semi-finals if NOT super-four (super-four goes directly to final)
       if (
         knockoutStage === "semi-final" ||
-        knockoutStage === "super-four" ||
         knockoutStage === "super-eight" ||
         knockoutStage === "quarter-final"
       ) {
@@ -957,7 +993,33 @@ const SagedianCricketLeague = () => {
         }
 
         // Update final based on semi-final results (for standard/super-four)
-        if (tournament.knockoutFormat !== "ipl-style") {
+        // if (tournament.knockoutFormat !== "ipl-style") {
+        //   const semiFinals = updatedMatches.filter(
+        //     (m) => m.stage === "Semi Final"
+        //   );
+        //   const allSemisComplete = semiFinals.every((m) => m.winner);
+        //   if (allSemisComplete && semiFinals.length === 2) {
+        //     const final = updatedMatches.find((m) => m.stage === "Final");
+        //     if (final && (!final.team1 || !final.winner)) {
+        //       final.team1 =
+        //         semiFinals[0].winner === semiFinals[0].team1?._id
+        //           ? semiFinals[0].team1
+        //           : semiFinals[0].team2;
+        //       final.team2 =
+        //         semiFinals[1].winner === semiFinals[1].team1?._id
+        //           ? semiFinals[1].team1
+        //           : semiFinals[1].team2;
+        //       hasUpdates = true;
+        //     }
+        //   }
+        // }
+
+        // Replaced with down code--->
+        // Update final based on semi-final results (only for tournaments with semi-finals)
+        if (
+          tournament.knockoutFormat !== "ipl-style" &&
+          tournament.knockoutStage !== "super-four"
+        ) {
           const semiFinals = updatedMatches.filter(
             (m) => m.stage === "Semi Final"
           );
@@ -1125,22 +1187,27 @@ const SagedianCricketLeague = () => {
             tournament.knockoutStage === "super-four" &&
             qualifiers.length >= 4
           ) {
-            // Super Four matches
+            // Super Four: Top 4 teams play complete round-robin (each team plays 3 matches)
             const superFourMatches = updatedMatches.filter(
               (m) => m.stage === "Super Four"
             );
-            if (superFourMatches.length >= 3 && !superFourMatches[0].team1) {
+            if (superFourMatches.length >= 6 && !superFourMatches[0].team1) {
               const top4 = qualifiers.slice(0, 4);
-              superFourMatches[0].team1 = top4[0];
-              superFourMatches[0].team2 = top4[1];
-              superFourMatches[1].team1 = top4[0];
-              superFourMatches[1].team2 = top4[2];
-              superFourMatches[2].team1 = top4[1];
-              superFourMatches[2].team2 = top4[2];
+              // Generate all possible matches between 4 teams
+              let matchIndex = 0;
+              for (let i = 0; i < top4.length; i++) {
+                for (let j = i + 1; j < top4.length; j++) {
+                  if (superFourMatches[matchIndex]) {
+                    superFourMatches[matchIndex].team1 = top4[i];
+                    superFourMatches[matchIndex].team2 = top4[j];
+                    matchIndex++;
+                  }
+                }
+              }
               hasUpdates = true;
             }
 
-            // Update final from Super Four
+            // Update final from Super Four (no semi-finals)
             const allSuperFourComplete = superFourMatches.every(
               (m) => m.winner
             );
@@ -1224,22 +1291,46 @@ const SagedianCricketLeague = () => {
         }
 
         // Update final for group stage tournaments
-        const semiFinals = updatedMatches.filter(
-          (m) => m.stage === "Semi Final"
-        );
-        const allSemisComplete = semiFinals.every((m) => m.winner);
-        if (allSemisComplete && semiFinals.length === 2) {
-          const final = updatedMatches.find((m) => m.stage === "Final");
-          if (final && (!final.team1 || !final.winner)) {
-            final.team1 =
-              semiFinals[0].winner === semiFinals[0].team1?._id
-                ? semiFinals[0].team1
-                : semiFinals[0].team2;
-            final.team2 =
-              semiFinals[1].winner === semiFinals[1].team1?._id
-                ? semiFinals[1].team1
-                : semiFinals[1].team2;
-            hasUpdates = true;
+        // const semiFinals = updatedMatches.filter(
+        //   (m) => m.stage === "Semi Final"
+        // );
+
+        // const allSemisComplete = semiFinals.every((m) => m.winner);
+        // if (allSemisComplete && semiFinals.length === 2) {
+        //   const final = updatedMatches.find((m) => m.stage === "Final");
+        //   if (final && (!final.team1 || !final.winner)) {
+        //     final.team1 =
+        //       semiFinals[0].winner === semiFinals[0].team1?._id
+        //         ? semiFinals[0].team1
+        //         : semiFinals[0].team2;
+        //     final.team2 =
+        //       semiFinals[1].winner === semiFinals[1].team1?._id
+        //         ? semiFinals[1].team1
+        //         : semiFinals[1].team2;
+        //     hasUpdates = true;
+        //   }
+        // }
+
+        // Replaced with down code--->
+        // Update final for group stage tournaments (only if not super-four, which handles its own final)
+        if (tournament.knockoutStage !== "super-four") {
+          const semiFinals = updatedMatches.filter(
+            (m) => m.stage === "Semi Final"
+          );
+          const allSemisComplete = semiFinals.every((m) => m.winner);
+          if (allSemisComplete && semiFinals.length === 2) {
+            const final = updatedMatches.find((m) => m.stage === "Final");
+            if (final && (!final.team1 || !final.winner)) {
+              final.team1 =
+                semiFinals[0].winner === semiFinals[0].team1?._id
+                  ? semiFinals[0].team1
+                  : semiFinals[0].team2;
+              final.team2 =
+                semiFinals[1].winner === semiFinals[1].team1?._id
+                  ? semiFinals[1].team1
+                  : semiFinals[1].team2;
+              hasUpdates = true;
+            }
           }
         }
       } else if (tournament.type === "tri-series") {
@@ -1838,7 +1929,61 @@ const SagedianCricketLeague = () => {
                             <span className="px-2 py-1 bg-blue-600 rounded text-white text-xs">
                               {tournament.type.replace("-", " ").toUpperCase()}
                             </span>
+                            {tournament.status === "completed" &&
+                              tournament.winner && (
+                                <span className="px-2 py-1 bg-yellow-600 rounded text-white text-xs flex items-center gap-1">
+                                  <Trophy size={12} /> COMPLETED
+                                </span>
+                              )}
                           </div>
+
+                          {/* Add Winner/Runner-up Display */}
+                          {tournament.winner && (
+                            <div className="mt-4 p-3 bg-gradient-to-r from-yellow-900/30 to-slate-800 rounded-lg border border-yellow-600/30">
+                              <div className="flex items-center justify-between flex-wrap gap-3">
+                                <div className="flex items-center gap-2">
+                                  <Trophy
+                                    className="text-yellow-500"
+                                    size={20}
+                                  />
+                                  <div>
+                                    <div className="text-xs text-slate-400">
+                                      Champion
+                                    </div>
+                                    <div className="font-bold text-yellow-400 flex items-center gap-2">
+                                      <div
+                                        className="w-4 h-4 rounded-full"
+                                        style={{
+                                          backgroundColor:
+                                            tournament.winner.color,
+                                        }}
+                                      />
+                                      {tournament.winner.name}
+                                    </div>
+                                  </div>
+                                </div>
+                                {tournament.runnerUp && (
+                                  <div className="flex items-center gap-2">
+                                    <div>
+                                      <div className="text-xs text-slate-400 text-right">
+                                        Runner-up
+                                      </div>
+                                      <div className="font-semibold text-slate-300 flex items-center gap-2">
+                                        <div
+                                          className="w-4 h-4 rounded-full"
+                                          style={{
+                                            backgroundColor:
+                                              tournament.runnerUp.color,
+                                          }}
+                                        />
+                                        {tournament.runnerUp.name}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <button
@@ -1925,6 +2070,21 @@ const SagedianCricketLeague = () => {
                         </span>
                         <span>{selectedTournament.teams.length} Teams</span>
                         <span>{selectedTournament.matches.length} Matches</span>
+
+                        {/* Winner Badge */}
+                        {selectedTournament.winner && (
+                          <>
+                            <span className="px-3 py-1 bg-yellow-600 rounded-full flex items-center gap-1">
+                              <Trophy size={14} />
+                              {selectedTournament.winner.name}
+                            </span>
+                            {selectedTournament.runnerUp && (
+                              <span className="px-3 py-1 bg-slate-600 rounded-full">
+                                Runner-up: {selectedTournament.runnerUp.name}
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                     <button
@@ -1969,6 +2129,46 @@ const SagedianCricketLeague = () => {
                   ))}
                 </div>
 
+                {/* ------------------------------------------------ */}
+
+                {/* Winner Banner */}
+                {selectedTournament.winner && (
+                  <div className="p-4 bg-gradient-to-r from-yellow-600/20 via-yellow-500/10 to-yellow-600/20 border-y-2 border-yellow-600/50">
+                    <div className="max-w-4xl mx-auto flex items-center justify-center gap-4 flex-wrap">
+                      <Trophy
+                        className="text-yellow-500 animate-bounce"
+                        size={32}
+                      />
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-yellow-400 mb-1">
+                          🎉 Tournament Champion 🎉
+                        </div>
+                        <div className="flex items-center gap-2 justify-center">
+                          <div
+                            className="w-6 h-6 rounded-full"
+                            style={{
+                              backgroundColor: selectedTournament.winner.color,
+                            }}
+                          />
+                          <span className="text-2xl font-bold text-white">
+                            {selectedTournament.winner.name}
+                          </span>
+                        </div>
+                        {selectedTournament.runnerUp && (
+                          <div className="text-sm text-slate-300 mt-2">
+                            Runner-up: {selectedTournament.runnerUp.name}
+                          </div>
+                        )}
+                      </div>
+                      <Trophy
+                        className="text-yellow-500 animate-bounce"
+                        size={32}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ----------------------------------------- */}
                 <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
                   {currentTab === "points" && (
                     <div>
@@ -1980,6 +2180,15 @@ const SagedianCricketLeague = () => {
                         const groupTables =
                           calculateGroupPointsTables(selectedTournament);
 
+                        // Check if Super Four stage exists and has matches
+                        const superFourMatches =
+                          selectedTournament.matches.filter(
+                            (m) => m.stage === "Super Four"
+                          );
+                        const hasSuperFour = superFourMatches.length > 0;
+                        const superFourStarted = superFourMatches.some(
+                          (m) => m.winner
+                        );
                         // If group stage tournament with groups, show separate tables
                         if (groupTables) {
                           return (
@@ -2062,6 +2271,128 @@ const SagedianCricketLeague = () => {
                                     </div>
                                   </div>
                                 )
+                              )}
+
+                              {/* Super Four Points Table */}
+                              {hasSuperFour && superFourStarted && (
+                                <div>
+                                  <h4 className="text-lg font-bold mb-3 text-purple-400">
+                                    Super Four Points Table
+                                  </h4>
+                                  {(() => {
+                                    // Get teams in Super Four
+                                    const superFourTeams = [];
+                                    const teamSet = new Set();
+
+                                    superFourMatches.forEach((match) => {
+                                      if (
+                                        match.team1 &&
+                                        !teamSet.has(match.team1._id)
+                                      ) {
+                                        superFourTeams.push(match.team1);
+                                        teamSet.add(match.team1._id);
+                                      }
+                                      if (
+                                        match.team2 &&
+                                        !teamSet.has(match.team2._id)
+                                      ) {
+                                        superFourTeams.push(match.team2);
+                                        teamSet.add(match.team2._id);
+                                      }
+                                    });
+
+                                    // Calculate Super Four points table
+                                    const superFourTable = calculatePointsTable(
+                                      {
+                                        ...selectedTournament,
+                                        matches: superFourMatches,
+                                        teams: superFourTeams,
+                                      }
+                                    );
+
+                                    return (
+                                      <div className="bg-slate-900 rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                          <thead className="bg-slate-700">
+                                            <tr>
+                                              <th className="px-4 py-3 text-left">
+                                                Pos
+                                              </th>
+                                              <th className="px-4 py-3 text-left">
+                                                Team
+                                              </th>
+                                              <th className="px-4 py-3 text-center">
+                                                P
+                                              </th>
+                                              <th className="px-4 py-3 text-center">
+                                                W
+                                              </th>
+                                              <th className="px-4 py-3 text-center">
+                                                L
+                                              </th>
+                                              <th className="px-4 py-3 text-center">
+                                                Pts
+                                              </th>
+                                              <th className="px-4 py-3 text-center">
+                                                NRR
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {superFourTable.map(
+                                              (entry, idx) => (
+                                                <tr
+                                                  key={entry.team._id}
+                                                  className={`border-t border-slate-700 hover:bg-slate-800 transition-all ${
+                                                    idx < 2
+                                                      ? "bg-purple-900/20"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  <td className="px-4 py-3 font-bold">
+                                                    {idx + 1}
+                                                  </td>
+                                                  <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                      <div
+                                                        className="w-6 h-6 rounded-full"
+                                                        style={{
+                                                          backgroundColor:
+                                                            entry.team.color,
+                                                        }}
+                                                      />
+                                                      <span className="font-medium">
+                                                        {entry.team.name}
+                                                      </span>
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-4 py-3 text-center">
+                                                    {entry.played}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-center text-emerald-400">
+                                                    {entry.won}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-center text-red-400">
+                                                    {entry.lost}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-center font-bold text-blue-400">
+                                                    {entry.points}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-center">
+                                                    {entry.nrr}
+                                                  </td>
+                                                </tr>
+                                              )
+                                            )}
+                                          </tbody>
+                                        </table>
+                                        <div className="bg-slate-800 px-4 py-2 text-xs text-slate-400">
+                                          Top 2 teams qualify for the Final
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
                               )}
                             </div>
                           );
