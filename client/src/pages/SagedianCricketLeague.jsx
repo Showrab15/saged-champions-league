@@ -1245,28 +1245,7 @@ const SagedianCricketLeague = () => {
           }
         }
 
-        // Update final for group stage tournaments
-        // const semiFinals = updatedMatches.filter(
-        //   (m) => m.stage === "Semi Final"
-        // );
-
-        // const allSemisComplete = semiFinals.every((m) => m.winner);
-        // if (allSemisComplete && semiFinals.length === 2) {
-        //   const final = updatedMatches.find((m) => m.stage === "Final");
-        //   if (final && (!final.team1 || !final.winner)) {
-        //     final.team1 =
-        //       semiFinals[0].winner === semiFinals[0].team1?._id
-        //         ? semiFinals[0].team1
-        //         : semiFinals[0].team2;
-        //     final.team2 =
-        //       semiFinals[1].winner === semiFinals[1].team1?._id
-        //         ? semiFinals[1].team1
-        //         : semiFinals[1].team2;
-        //     hasUpdates = true;
-        //   }
-        // }
-
-        // Replaced with down code--->
+   
         // Update final for group stage tournaments (only if not super-four, which handles its own final)
         if (tournament.knockoutStage !== "super-four") {
           const semiFinals = updatedMatches.filter(
