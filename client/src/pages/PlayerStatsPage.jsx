@@ -2,52 +2,83 @@
 import { useState, useEffect } from 'react';
 import { 
   User, Trophy, TrendingUp, Target, Zap, Award,
-  Edit2, Trash2, Plus, X, Save, BarChart3
+  Edit2, Trash2, Plus, X, Save, BarChart3, Home, ArrowLeft
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
+import { setUserId } from '../services/api';
+import axios from 'axios';
 
-// Simulated API - Replace with actual API calls
+const API_URL = "http://localhost:5000";
+
+// Players API
 const playersAPI = {
-  getAll: async () => {
-    // Replace with actual API call
-    return { data: [] };
+  getAll: async (params) => {
+    const response = await axios.get(`${API_URL}/players`, { params });
+    return response;
   },
-  create: async (player) => {
-    console.log('Creating player:', player);
-    return { data: { ...player, _id: Date.now().toString() } };
+  create: async (playerData) => {
+    const response = await axios.post(`${API_URL}/players`, playerData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': localStorage.getItem('userId')
+      }
+    });
+    return response;
   },
-  update: async (id, player) => {
-    console.log('Updating player:', id, player);
-    return { data: player };
+  update: async (id, playerData) => {
+    const response = await axios.put(`${API_URL}/players/${id}`, playerData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': localStorage.getItem('userId')
+      }
+    });
+    return response;
   },
   delete: async (id) => {
-    console.log('Deleting player:', id);
-    return { data: { success: true } };
+    const response = await axios.delete(`${API_URL}/players/${id}`, {
+      headers: {
+        'x-user-id': localStorage.getItem('userId')
+      }
+    });
+    return response;
   }
 };
 
-const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
+// Teams API
+const teamsAPI = {
+  getAll: async () => {
+    const response = await axios.get(`${API_URL}/teams`);
+    return response;
+  }
+};
+
+const PlayerStatsPage = () => {
+  const { currentUser, logout } = useAuth();
   const [players, setPlayers] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTeam, setFilterTeam] = useState('all');
 
-  // AI-generated player images (placeholder URLs - replace with actual AI-generated images)
+  // AI-generated player images
   const getPlayerImage = (playerId, role) => {
+    const seed = playerId || Math.random().toString();
     const batsmanImages = [
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=batman1&accessories=sunglasses&clothing=blazerShirt',
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=batman2&accessories=prescription02&clothing=hoodie',
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=batman3&accessories=wayfarers&clothing=blazerSweater'
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}1&accessories=sunglasses&clothing=blazerShirt`,
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}2&accessories=prescription02&clothing=hoodie`,
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}3&accessories=wayfarers&clothing=blazerSweater`
     ];
     const bowlerImages = [
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=bowler1&accessories=round&clothing=overall',
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=bowler2&accessories=sunglasses&clothing=shirtVNeck',
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=bowler3&accessories=prescription01&clothing=collarSweater'
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}4&accessories=round&clothing=overall`,
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}5&accessories=sunglasses&clothing=shirtVNeck`,
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}6&accessories=prescription01&clothing=collarSweater`
     ];
     
-    const images = role === 'Batsman' ? batsmanImages : bowlerImages;
-    return images[Math.abs(playerId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % images.length];
+    const images = role === 'Batsman' || role === 'Wicket-Keeper' ? batsmanImages : bowlerImages;
+    return images[Math.abs(seed.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % images.length];
   };
 
   const [formData, setFormData] = useState({
@@ -72,16 +103,24 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
   });
 
   useEffect(() => {
-    loadPlayers();
-  }, []);
+    if (currentUser) {
+      setUserId(currentUser.uid);
+      localStorage.setItem('userId', currentUser.uid);
+    }
+    loadData();
+  }, [currentUser]);
 
-  const loadPlayers = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await playersAPI.getAll();
-      setPlayers(response.data);
+      const [playersRes, teamsRes] = await Promise.all([
+        playersAPI.getAll(),
+        teamsAPI.getAll()
+      ]);
+      setPlayers(playersRes.data);
+      setTeams(teamsRes.data);
     } catch (error) {
-      console.error('Failed to load players:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
@@ -110,15 +149,18 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
       if (editingPlayer) {
         await playersAPI.update(editingPlayer._id, playerData);
         setPlayers(players.map(p => p._id === editingPlayer._id ? { ...playerData, _id: p._id } : p));
+        alert('Player updated successfully!');
       } else {
         const response = await playersAPI.create(playerData);
-        setPlayers([...players, response.data]);
+        setPlayers([...players, response.data.player]);
+        alert('Player created successfully!');
       }
 
       resetForm();
       setShowModal(false);
     } catch (error) {
-      alert('Failed to save player');
+      console.error('Failed to save player:', error);
+      alert(error.response?.data?.message || 'Failed to save player');
     }
   };
 
@@ -142,8 +184,10 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
       try {
         await playersAPI.delete(playerId);
         setPlayers(players.filter(p => p._id !== playerId));
+        alert('Player deleted successfully!');
       } catch (error) {
-        alert('Failed to delete player');
+        console.error('Failed to delete player:', error);
+        alert(error.response?.data?.message || 'Failed to delete player');
       }
     }
   };
@@ -180,66 +224,113 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <Trophy className="text-yellow-500" size={40} />
-              Player Statistics
-            </h1>
-            <p className="text-slate-300">Manage and track player performance</p>
+      <header className="bg-slate-800 border-b-4 border-red-600 sticky top-0 z-50 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Trophy className="text-red-600" size={32} />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-red-600">
+                  PLAYER STATISTICS
+                </h1>
+                <p className="text-xs text-slate-400">
+                  Complete Player Performance Database
+                </p>
+              </div>
+            </div>
+            <nav className="flex gap-2 flex-wrap justify-center">
+              <Link to="/">
+                <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
+                  <ArrowLeft size={16} /> Back to Home
+                </button>
+              </Link>
+              {currentUser ? (
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link to="/login">
+                  <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
+                    Login
+                  </button>
+                </Link>
+              )}
+            </nav>
           </div>
-          
-          {currentUser && (
-            <button
-              onClick={() => {
-                resetForm();
-                setShowModal(true);
-              }}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Controls Section */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                <User className="text-yellow-500" size={36} />
+                All Players
+              </h2>
+              <p className="text-slate-300">
+                {filteredPlayers.length} player{filteredPlayers.length !== 1 ? 's' : ''} found
+              </p>
+            </div>
+            
+            {currentUser && (
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
+              >
+                <Plus size={20} />
+                Add Player
+              </button>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              placeholder="Search players or teams..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <select
+              value={filterTeam}
+              onChange={(e) => setFilterTeam(e.target.value)}
+              className="px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <Plus size={20} />
-              Add Player
-            </button>
-          )}
+              <option value="all">All Teams</option>
+              {teams.map(team => (
+                <option key={team._id} value={team.name}>{team.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mt-6">
-          <input
-            type="text"
-            placeholder="Search players or teams..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <select
-            value={filterTeam}
-            onChange={(e) => setFilterTeam(e.target.value)}
-            className="px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            <option value="all">All Teams</option>
-            {teams?.map(team => (
-              <option key={team._id} value={team.name}>{team.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Player Cards Grid */}
-      <div className="max-w-7xl mx-auto">
+        {/* Player Cards Grid */}
         {loading ? (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="text-slate-400 mt-4">Loading players...</p>
           </div>
         ) : filteredPlayers.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 bg-slate-800 rounded-xl">
             <User size={64} className="mx-auto text-slate-600 mb-4" />
             <p className="text-slate-400 text-xl">No players found</p>
-            <p className="text-slate-500 mt-2">Add your first player to get started!</p>
+            <p className="text-slate-500 mt-2">
+              {searchQuery || filterTeam !== 'all' 
+                ? 'Try adjusting your filters' 
+                : 'Add your first player to get started!'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -383,7 +474,7 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
             ))}
           </div>
         )}
-      </div>
+      </main>
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -429,7 +520,7 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
                     required
                     value={formData.teamId}
                     onChange={(e) => {
-                      const team = teams?.find(t => t._id === e.target.value);
+                      const team = teams.find(t => t._id === e.target.value);
                       setFormData({
                         ...formData,
                         teamId: e.target.value,
@@ -439,7 +530,7 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
                     className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   >
                     <option value="">Select team</option>
-                    {teams?.map(team => (
+                    {teams.map(team => (
                       <option key={team._id} value={team._id}>{team.name}</option>
                     ))}
                   </select>
@@ -512,7 +603,7 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
               {/* Batting Statistics */}
               <div className="bg-orange-900/20 rounded-lg p-4 border border-orange-800/30">
                 <h3 className="text-lg font-bold text-orange-400 mb-4">Batting Statistics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs text-slate-400 mb-2">Runs</label>
                     <input
@@ -651,6 +742,48 @@ const PlayerStatsPage = ({ currentUser, adminCode, teams }) => {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-slate-800 border-t-2 border-red-600 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center text-slate-400">
+            <p className="mb-2">
+              © 2025 SAGED CHAMPIONS LEAGUE - Player Statistics Database
+            </p>
+            <p className="text-sm">
+              Track every run, wicket, and milestone | Complete cricket analytics
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.5s ease-out;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+      `}</style>
     </div>
   );
 };

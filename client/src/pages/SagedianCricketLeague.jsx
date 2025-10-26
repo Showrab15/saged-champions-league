@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Trophy,
   Users,
+  User,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -1349,62 +1350,73 @@ const SagedianCricketLeague = () => {
                 </p>
               </div>
             </div>
-            <nav className="flex gap-2 flex-wrap justify-center">
-              <button
-                onClick={() => setCurrentView("home")}
-                className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
-                  currentView === "home"
-                    ? "bg-red-600"
-                    : "bg-slate-700 hover:bg-slate-600"
-                }`}
-              >
-                <Home size={16} /> Home
-              </button>
-              <button
-                onClick={() => setCurrentView("teams")}
-                className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
-                  currentView === "teams"
-                    ? "bg-red-600"
-                    : "bg-slate-700 hover:bg-slate-600"
-                }`}
-              >
-                <Users size={16} /> Teams
-              </button>
-              <button
-                onClick={() => setCurrentView("create")}
-                className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
-                  currentView === "create"
-                    ? "bg-red-600"
-                    : "bg-slate-700 hover:bg-slate-600"
-                }`}
-              >
-                <Plus size={16} /> Create
-              </button>
-              <button
-                onClick={() => setCurrentView("tournaments")}
-                className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
-                  currentView === "tournaments"
-                    ? "bg-red-600"
-                    : "bg-slate-700 hover:bg-slate-600"
-                }`}
-              >
-                <Trophy size={16} /> Tournaments
-              </button>
-              {currentUser ? (
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700"
-                >
-                  Logout
-                </button>
-              ) : (
-                <Link to="/login">
-                  <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
-                    Login
-                  </button>
-                </Link>
-              )}
-            </nav>
+       <nav className="flex gap-2 flex-wrap justify-center">
+  <button
+    onClick={() => setCurrentView("home")}
+    className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
+      currentView === "home"
+        ? "bg-red-600"
+        : "bg-slate-700 hover:bg-slate-600"
+    }`}
+  >
+    <Home size={16} /> Home
+  </button>
+  
+  <button
+    onClick={() => setCurrentView("teams")}
+    className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
+      currentView === "teams"
+        ? "bg-red-600"
+        : "bg-slate-700 hover:bg-slate-600"
+    }`}
+  >
+    <Users size={16} /> Teams
+  </button>
+
+  {/* NEW: Add Player Stats Link */}
+  <Link to="/players">
+    <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
+      <User size={16} /> Players
+    </button>
+  </Link>
+
+  <button
+    onClick={() => setCurrentView("create")}
+    className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
+      currentView === "create"
+        ? "bg-red-600"
+        : "bg-slate-700 hover:bg-slate-600"
+    }`}
+  >
+    <Plus size={16} /> Create
+  </button>
+  
+  <button
+    onClick={() => setCurrentView("tournaments")}
+    className={`px-4 py-2 rounded transition-all flex items-center gap-2 ${
+      currentView === "tournaments"
+        ? "bg-red-600"
+        : "bg-slate-700 hover:bg-slate-600"
+    }`}
+  >
+    <Trophy size={16} /> Tournaments
+  </button>
+
+  {currentUser ? (
+    <button
+      onClick={logout}
+      className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700"
+    >
+      Logout
+    </button>
+  ) : (
+    <Link to="/login">
+      <button className="px-4 py-2 rounded transition-all flex items-center gap-2 bg-slate-700 hover:bg-slate-600">
+        Login
+      </button>
+    </Link>
+  )}
+</nav>
           </div>
         </div>
       </header>
