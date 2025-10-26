@@ -356,21 +356,7 @@ const SagedianCricketLeague = () => {
         }
       }
 
-      // if (knockoutStage === "super-four") {
-      //   for (let i = 0; i < 3; i++) {
-      //     matches.push({
-      //       _id: `match-${matches.length}`,
-      //       team1: null,
-      //       team2: null,
-      //       winner: null,
-      //       stage: "Super Four",
-      //       team1Score: { runs: 0, overs: 0 },
-      //       team2Score: { runs: 0, overs: 0 },
-      //     });
-      //   }
-      // }
-
-      // Replaced with down->
+  
 
       if (knockoutStage === "super-four") {
         // Super Four: Top 4 teams play round-robin (6 matches total)
