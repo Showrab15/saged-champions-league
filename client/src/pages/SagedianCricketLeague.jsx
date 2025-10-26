@@ -969,29 +969,7 @@ const SagedianCricketLeague = () => {
           }
         }
 
-        // Update final based on semi-final results (for standard/super-four)
-        // if (tournament.knockoutFormat !== "ipl-style") {
-        //   const semiFinals = updatedMatches.filter(
-        //     (m) => m.stage === "Semi Final"
-        //   );
-        //   const allSemisComplete = semiFinals.every((m) => m.winner);
-        //   if (allSemisComplete && semiFinals.length === 2) {
-        //     const final = updatedMatches.find((m) => m.stage === "Final");
-        //     if (final && (!final.team1 || !final.winner)) {
-        //       final.team1 =
-        //         semiFinals[0].winner === semiFinals[0].team1?._id
-        //           ? semiFinals[0].team1
-        //           : semiFinals[0].team2;
-        //       final.team2 =
-        //         semiFinals[1].winner === semiFinals[1].team1?._id
-        //           ? semiFinals[1].team1
-        //           : semiFinals[1].team2;
-        //       hasUpdates = true;
-        //     }
-        //   }
-        // }
-
-        // Replaced with down code--->
+    
         // Update final based on semi-final results (only for tournaments with semi-finals)
         if (
           tournament.knockoutFormat !== "ipl-style" &&
