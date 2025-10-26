@@ -386,26 +386,7 @@ const SagedianCricketLeague = () => {
         }
       }
 
-      // if (
-      //   knockoutStage === "semi-final" ||
-      //   knockoutStage === "super-four" ||
-      //   knockoutStage === "super-eight" ||
-      //   knockoutStage === "quarter-final"
-      // ) {
-      //   for (let i = 0; i < 2; i++) {
-      //     matches.push({
-      //       _id: `match-${matches.length}`,
-      //       team1: null,
-      //       team2: null,
-      //       winner: null,
-      //       stage: "Semi Final",
-      //       team1Score: { runs: 0, overs: 0 },
-      //       team2Score: { runs: 0, overs: 0 },
-      //     });
-      //   }
-      // }
-
-      // Replaced with down code --->
+   
       // Only add semi-finals if NOT super-four (super-four goes directly to final)
       if (
         knockoutStage === "semi-final" ||
