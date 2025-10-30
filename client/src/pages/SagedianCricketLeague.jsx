@@ -121,24 +121,7 @@ const SagedianCricketLeague = () => {
     }
   };
 
-  // const updateMatchResult = async (tournamentId, matchId, winnerId, scores) => {
-  //   try {
-  //     await tournamentsAPI.updateMatch(tournamentId, matchId, {
-  //       adminCode: adminCode,
-  //       winner: winnerId,
-  //       team1Score: scores.team1Score,
-  //       team2Score: scores.team2Score,
-  //     });
-
-  //     // Reload tournament data
-  //     await loadData();
-  //     setEditingMatch(null);
-  //     setAdminCode("");
-  //   } catch (error) {
-  //     alert("Failed to update match result");
-  //   }
-  // };
-
+  
   const deleteTournament = async (_id, code) => {
     try {
       await tournamentsAPI.delete(_id, code);
