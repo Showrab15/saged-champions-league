@@ -6,7 +6,6 @@ import SagedianCricketLeague from "./pages/SagedianCricketLeague.jsx";
 function App() {
   return (
     <div className="min-h-screen bg-dark">
-      {/* <Header user={user} /> */}
       <Routes>
         <Route path="/" element={<SagedianCricketLeague />} />
 
