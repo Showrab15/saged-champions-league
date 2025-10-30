@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://cricket-league-backend.vercel.app"; // Change for production
+const API_URL = import.meta.env.VITE_API_URL; // ✅ Loaded from environment variable
 
 // Create axios instance
 const api = axios.create({
