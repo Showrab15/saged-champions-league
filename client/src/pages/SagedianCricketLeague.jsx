@@ -132,25 +132,7 @@ const SagedianCricketLeague = () => {
     }
   };
 
-  // useEffect(() => {
-  //   const sampleTeams = [
-  //     "Dhaka Dynamites",
-  //     "Chittagong Challengers",
-  //     "Sylhet Strikers",
-  //     "Rajshahi Raiders",
-  //     "Khulna Kings",
-  //     "Rangpur Rangers",
-  //     "Comilla Crushers",
-  //     "Mymensingh Mavericks",
-  //   ];
-  //   setTeams(
-  //     sampleTeams.map((name, idx) => ({
-  //       _id: `team-${idx}`,
-  //       name,
-  //       color: getTeamColor(idx),
-  //     }))
-  //   );
-  // }, []);
+ 
 
   const getTeamColor = (idx) => {
     const colors = [
