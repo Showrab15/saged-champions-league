@@ -49,42 +49,54 @@ const SagedianCricketLeague = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentUser) {
-      setUserId(currentUser.uid);
-      loadData();
-    }
-  }, [currentUser]);
+  if (currentUser) {
+    setUserId(currentUser.uid);
+    loadData();
+  }
+}, [currentUser]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [teamsRes, tournamentsRes] = await Promise.all([
-        teamsAPI.getAll(),
-        tournamentsAPI.getAll(),
-      ]);
-      setTeams(teamsRes.data);
-      setTournaments(tournamentsRes.data);
-    } catch (error) {
-      console.error("Failed to load data:", error);
-    } finally {
-      setLoading(false);
+const loadData = async () => {
+  try {
+    setLoading(true);
+    const [teamsRes, tournamentsRes] = await Promise.all([
+      teamsAPI.getAll(),
+      tournamentsAPI.getAll(),
+    ]);
+    setTeams(teamsRes.data);
+    setTournaments(tournamentsRes.data);
+  } catch (error) {
+    console.error("Failed to load data:", error);
+    // Add user-friendly error handling
+    if (error.response?.status === 401) {
+      console.error("Authentication error - user not logged in");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const addTeam = async () => {
-    if (newTeamName.trim()) {
-      try {
-        const response = await teamsAPI.create({
-          name: newTeamName.trim(),
-          color: getTeamColor(teams.length),
-        });
-        setTeams([...teams, response.data.team]);
-        setNewTeamName("");
-      } catch (error) {
+  if (newTeamName.trim()) {
+    try {
+      if (!currentUser) {
+        alert("Please log in to add teams");
+        return;
+      }
+      const response = await teamsAPI.create({
+        name: newTeamName.trim(),
+        color: getTeamColor(teams.length),
+      });
+      setTeams([...teams, response.data.team]);
+      setNewTeamName("");
+    } catch (error) {
+      if (error.response?.status === 401) {
+        alert("Please log in to add teams");
+      } else {
         alert("Failed to add team");
       }
     }
-  };
+  }
+};
 
   const createTournament = async () => {
     if (!tournamentName.trim() || selectedTeams.length < 2) return;
